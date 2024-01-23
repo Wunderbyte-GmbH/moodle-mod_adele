@@ -62,21 +62,25 @@ echo $OUTPUT->header();
 
 // Early bail out conditions.
 if (isloggedin() && !isguestuser()
-  && has_capability('mod/adele:addlearningpath', context_system::instance())) {
+  && has_capability('mod/adele:addinstance', context_system::instance())) {
+    $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
     echo <<<'EOT'
-    <div> HERE we are Teacher!!!!!!</div>
-    <div id="teacherapp"></div>
+    <div id="local-adele-app" view="teacher" learningpath="74" user="{$USER->id}">
+      <router-view></router-view>
+    </div>
     EOT;
 }
 
 // Early bail out conditions.
 if (isloggedin() && !isguestuser()
-  && has_capability('mod/adele:seelearningpath', context_system::instance())
-  && !has_capability('mod/adele:addlearningpath', context_system::instance())) {
-    echo <<<'EOT'
-    <div> HERE we are Student Mudent!!!!!!</div>
-    <div id="studentapp"></div>
-    EOT;
+  && has_capability('mod/adele:readinstance', context_system::instance())
+  && !has_capability('mod/adele:addinstance', context_system::instance())) {
+    $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
+    echo <<<EOT
+    <div id="local-adele-app" view="student" learningpath="74" user="{$USER->id}">
+      <router-view></router-view>
+    </div>
+EOT;
 }
 
 echo $OUTPUT->footer();

@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $capabilities = array(
     // Ability to add learning path to the course.
-    'mod/adele:addlearningpath' => array(
+    'mod/adele:addinstance' => array(
         'riskbitmask' => RISK_XSS,
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
@@ -38,7 +38,7 @@ $capabilities = array(
         ),
     ),
     // Ability to see the learning path you have been assigned.
-    'mod/adele:seelearningpath' => array(
+    'mod/adele:readinstance' => array(
       'riskbitmask' => RISK_XSS,
       'captype' => 'view',
       'contextlevel' => CONTEXT_COURSE,

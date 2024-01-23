@@ -22,6 +22,8 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_adele\learning_paths;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/moodleform_mod.php');
@@ -71,12 +73,13 @@ class mod_adele_mod_form extends moodleform_mod {
         $mform->addElement('static', 'label1', 'adelesettings', get_string('adelesettings', 'mod_adele'));
         $mform->addElement('header', 'adelefieldset', get_string('adelefieldset', 'mod_adele'));
 
-        $select = [
-          1 => 'eins',
-          2 => 'zwei',
-        ];
+        $select = [];
+        $records = learning_paths::get_learning_paths();
+        foreach ($records as $record) {
+            $select[$record['id']] = $record['name'];
+        }
 
-        $mform->addElement('select', 'learnpathid', 'myname', $select);
+        $mform->addElement('select', 'learnpathid', get_string('mform_select', 'mod_adele'), $select);
 
         // Add standard elements.
         $this->standard_coursemodule_elements();

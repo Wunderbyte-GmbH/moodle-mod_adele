@@ -37,3 +37,6 @@ $string['pluginadministration'] = 'Adele Plugin Administration';
 // Capabilities.
 $string['adele:addlearningpath'] = 'Can add learning paths';
 $string['mod/adele:seelearningpath'] = 'Can see learning paths';
+
+// Mform.
+$string['mform_select'] = 'Choosen Learning Path';
