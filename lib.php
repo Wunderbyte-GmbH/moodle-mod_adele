@@ -95,3 +95,43 @@ function adele_delete_instance($id) {
 
     return true;
 }
+
+function mod_adele_cm_info_view(cm_info $cm) {
+    global $DB, $PAGE, $USER;
+    $learningpath = $DB->get_record(
+      'adele',
+      [
+        'id' => $cm->instance,
+        'course' => $cm->course
+      ],
+      'id, learningpathid, view'
+    );
+    if (
+          isloggedin() &&
+          !isguestuser() &&
+          $learningpath->view == 1 &&
+          $learningpath->learningpathid
+        ) {
+        if (has_capability('mod/adele:addinstance', context_system::instance())) {
+            $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
+            $html = '
+                <div id="local-adele-app" name="local-adele-app" view="teacher" learningpath="' .
+                $learningpath->learningpathid .
+                '" user="' . $USER->id . '">
+                  <router-view></router-view>
+                </div>
+            ';
+            $cm->set_content($html);
+        } else if (has_capability('mod/adele:readinstance', context_system::instance())) {
+            $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
+            $html = '
+                <div id="local-adele-app" view="student" learningpath="' .
+                $learningpath->learningpathid .
+                '" user="' . $USER->id . '">
+                  <router-view></router-view>
+                </div>
+            ';
+            $cm->set_content($html);
+        }
+    }
+}

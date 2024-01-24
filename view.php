@@ -57,27 +57,37 @@ $PAGE->set_url('/mod/adele/view.php', array('id' => $cm->id));
 $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
+$learningpathid = $DB->get_field(
+    'adele',
+    'learningpathid',
+    [
+      'id' => $cm->instance,
+      'course' => $cm->course
+    ]
+);
 
 echo $OUTPUT->header();
 
 // Early bail out conditions.
 if (isloggedin() && !isguestuser()
-  && has_capability('mod/adele:addinstance', context_system::instance())) {
+  && has_capability('mod/adele:addinstance', context_system::instance())
+  && $learningpathid) {
     $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
-    echo <<<'EOT'
-    <div id="local-adele-app" view="teacher" learningpath="74" user="{$USER->id}">
+    echo <<<EOT
+    <div id="local-adele-app" name="local-adele-app" view="teacher" learningpath="{$learningpathid}" user="{$USER->id}">
       <router-view></router-view>
     </div>
-    EOT;
+EOT;
 }
 
 // Early bail out conditions.
 if (isloggedin() && !isguestuser()
   && has_capability('mod/adele:readinstance', context_system::instance())
-  && !has_capability('mod/adele:addinstance', context_system::instance())) {
+  && !has_capability('mod/adele:addinstance', context_system::instance())
+  && $learningpath->learningpathid) {
     $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
     echo <<<EOT
-    <div id="local-adele-app" view="student" learningpath="74" user="{$USER->id}">
+    <div id="local-adele-app" view="student" learningpath="{$learningpath->learningpathid}" user="{$USER->id}">
       <router-view></router-view>
     </div>
 EOT;

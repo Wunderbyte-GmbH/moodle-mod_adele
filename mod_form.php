@@ -79,7 +79,19 @@ class mod_adele_mod_form extends moodleform_mod {
             $select[$record['id']] = $record['name'];
         }
 
-        $mform->addElement('select', 'learnpathid', get_string('mform_select', 'mod_adele'), $select);
+        $mform->addElement('select', 'learningpathid', get_string('mform_select_learningpath', 'mod_adele'), $select);
+
+        $views = [
+          1 => 'Show Learningpath on top level',
+          2 => 'Show Learningpath on floor level',
+        ];
+        $mform->addElement('select', 'view', get_string('mform_select_view', 'mod_adele'), $views);
+
+        $userlist = [
+          1 => 'Students see overview of all students',
+          2 => 'Students see only their own results',
+        ];
+        $mform->addElement('select', 'userlist', get_string('mform_select_userlist', 'mod_adele'), $userlist);
 
         // Add standard elements.
         $this->standard_coursemodule_elements();
