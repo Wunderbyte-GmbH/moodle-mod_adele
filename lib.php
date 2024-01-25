@@ -104,7 +104,7 @@ function mod_adele_cm_info_view(cm_info $cm) {
         'id' => $cm->instance,
         'course' => $cm->course
       ],
-      'id, learningpathid, view'
+      'id, learningpathid, view, userlist'
     );
     if (
           isloggedin() &&
@@ -116,8 +116,8 @@ function mod_adele_cm_info_view(cm_info $cm) {
             $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
             $html = '
                 <div id="local-adele-app" name="local-adele-app" view="teacher" learningpath="' .
-                $learningpath->learningpathid .
-                '" user="' . $USER->id . '">
+                $learningpath->learningpathid . '" user="' . $USER->id . '" userlist="' .
+                $learningpath->userlist . '">
                   <router-view></router-view>
                 </div>
             ';
@@ -125,9 +125,9 @@ function mod_adele_cm_info_view(cm_info $cm) {
         } else if (has_capability('mod/adele:readinstance', context_system::instance())) {
             $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
             $html = '
-                <div id="local-adele-app" view="student" learningpath="' .
-                $learningpath->learningpathid .
-                '" user="' . $USER->id . '">
+                <div id="local-adele-app" name="local-adele-app" view="student" learningpath="' .
+                $learningpath->learningpathid . '" user="' . $USER->id . '" userlist="' .
+                $learningpath->userlist . '">
                   <router-view></router-view>
                 </div>
             ';

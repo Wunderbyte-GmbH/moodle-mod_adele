@@ -42,3 +42,4 @@ $string['mod/adele:seelearningpath'] = 'Can see learning paths';
 $string['mform_select_learningpath'] = 'Choosen Learning Path';
 $string['mform_select_view'] = 'Choose view';
 $string['mform_select_userlist'] = 'Choose userlist option';
+$string['mform_select_participantslist'] = 'Choose an option how people get subscribbed to the learningpath';
