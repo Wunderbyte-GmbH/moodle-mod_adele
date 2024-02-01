@@ -22,6 +22,8 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_adele\local_adele;
+
 /**
  * Return if the plugin supports $feature.
  *
@@ -98,7 +100,7 @@ function adele_delete_instance($id) {
 
 function mod_adele_cm_info_view(cm_info $cm) {
     global $DB, $PAGE, $USER;
-    $learningpath = $DB->get_record(
+    $learningpathmod = $DB->get_record(
       'adele',
       [
         'id' => $cm->instance,
@@ -109,28 +111,47 @@ function mod_adele_cm_info_view(cm_info $cm) {
     if (
           isloggedin() &&
           !isguestuser() &&
-          $learningpath->view == 1 &&
-          $learningpath->learningpathid
+          $learningpathmod->view == 1 &&
+          $learningpathmod->learningpathid
         ) {
+
+        $alisecompatible = local_adele::get_internalquuiz_id($learningpathmod->learningpathid, $PAGE->course->id);
+
         if (has_capability('mod/adele:addinstance', context_system::instance())) {
-            $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
-            $html = '
-                <div id="local-adele-app" name="local-adele-app" view="teacher" learningpath="' .
-                $learningpath->learningpathid . '" user="' . $USER->id . '" userlist="' .
-                $learningpath->userlist . '">
-                  <router-view></router-view>
-                </div>
-            ';
+            if ($alisecompatible['alisecompatible']) {
+                $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
+                $html = '
+                    <div id="local-adele-app" name="local-adele-app" view="teacher" learningpath="' .
+                    $learningpathmod->learningpathid . '" user="' . $USER->id . '" userlist="' .
+                    $learningpathmod->userlist . '">
+                      <router-view></router-view>
+                    </div>
+                ';
+            } else {
+                $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
+                    padding: 15px; margin-bottom: 20px; color: #721c24;">
+                    <i class="fas fa-exclamation-circle" style="color: #721c24; margin-right: 10px;"></i>
+                    <strong>' . $alisecompatible['msg'] . '</strong>
+                </div>';
+            }
             $cm->set_content($html);
         } else if (has_capability('mod/adele:readinstance', context_system::instance())) {
-            $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
-            $html = '
-                <div id="local-adele-app" name="local-adele-app" view="student" learningpath="' .
-                $learningpath->learningpathid . '" user="' . $USER->id . '" userlist="' .
-                $learningpath->userlist . '">
-                  <router-view></router-view>
-                </div>
-            ';
+            if ($alisecompatible['alisecompatible']) {
+                $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
+                $html = '
+                    <div id="local-adele-app" name="local-adele-app" view="student" learningpath="' .
+                    $learningpathmod->learningpathid . '" user="' . $USER->id . '" userlist="' .
+                    $learningpathmod->userlist . '">
+                      <router-view></router-view>
+                    </div>
+                ';
+            } else {
+                $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
+                    padding: 15px; margin-bottom: 20px; color: #721c24;">
+                    <i class="fas fa-exclamation-circle" style="color: #721c24; margin-right: 10px;"></i>
+                    <strong>' . $alisecompatible['msg'] . '</strong>
+                </div>';
+            }
             $cm->set_content($html);
         }
     }

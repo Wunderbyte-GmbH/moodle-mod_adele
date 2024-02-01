@@ -22,6 +22,8 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_adele\local_adele;
+
 require(__DIR__.'/../../config.php');
 require_once(__DIR__.'/lib.php');
 
@@ -69,32 +71,53 @@ $learningpath = $DB->get_record(
 echo $OUTPUT->header();
 
 // Early bail out conditions.
-if (isloggedin() && !isguestuser()
-  && has_capability('mod/adele:addinstance', context_system::instance())
-  && $learningpath->learningpathid) {
-    $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
-    echo <<<EOT
-    <div id="local-adele-app" name="local-adele-app"
-        view="teacher" learningpath="{$learningpath->learningpathid}"
-        user="{$USER->id}" userlist="{$learningpath->userlist}">
-      <router-view></router-view>
-    </div>
-EOT;
-}
+if (
+  isloggedin() &&
+  !isguestuser() &&
+  $learningpath->view == 1 &&
+  $learningpath->learningpathid
+) {
+    $alisecompatible = local_adele::get_internalquuiz_id($learningpath->learningpathid, $PAGE->course->id);
 
-// Early bail out conditions.
-if (isloggedin() && !isguestuser()
-  && has_capability('mod/adele:readinstance', context_system::instance())
-  && !has_capability('mod/adele:addinstance', context_system::instance())
-  && $learningpath->learningpathid) {
-    $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
-    echo <<<EOT
-    <div id="local-adele-app"name="local-adele-app"
-        view="student" learningpath="{$learningpath->learningpathid}"
-        user="{$USER->id}" userlist="{$learningpath->userlist}">
-      <router-view></router-view>
-    </div>
-EOT;
+    if (has_capability('mod/adele:addinstance', context_system::instance())) {
+        if ($alisecompatible['alisecompatible']) {
+            $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
+            echo <<<EOT
+            <div id="local-adele-app" name="local-adele-app"
+                view="teacher" learningpath="{$learningpath->learningpathid}"
+                user="{$USER->id}" userlist="{$learningpath->userlist}">
+              <router-view></router-view>
+            </div>
+            EOT;
+        } else {
+            echo <<<EOT
+                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
+                    padding: 15px; margin-bottom: 20px; color: #721c24;">
+                    <i class="fas fa-exclamation-circle" style="color: #721c24; margin-right: 10px;"></i>
+                    <strong>{$alisecompatible['msg']}</strong>
+                </div>
+            EOT;
+        }
+    } else if (has_capability('mod/adele:readinstance', context_system::instance())) {
+        if ($alisecompatible['alisecompatible']) {
+            $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
+            echo <<<EOT
+            <div id="local-adele-app"name="local-adele-app"
+                view="student" learningpath="{$learningpath->learningpathid}"
+                user="{$USER->id}" userlist="{$learningpath->userlist}">
+              <router-view></router-view>
+            </div>
+            EOT;
+        } else {
+            echo <<<EOT
+                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
+                    padding: 15px; margin-bottom: 20px; color: #721c24;">
+                    <i class="fas fa-exclamation-circle" style="color: #721c24; margin-right: 10px;"></i>
+                    <strong>{$alisecompatible['msg']}</strong>
+                </div>
+            EOT;
+        }
+    }
 }
 
 echo $OUTPUT->footer();
