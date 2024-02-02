@@ -94,10 +94,11 @@ class mod_adele_mod_form extends moodleform_mod {
         $mform->addElement('select', 'userlist', get_string('mform_select_userlist', 'mod_adele'), $userlist);
 
         $participantslist = [
-          1 => 'Everyone how is subscribed who is subscribed to that course',
+          1 => 'Everyone who is subscribed who is subscribed to that course',
           2 => 'Everyone is subscribbed who is in one starting node',
         ];
-        $mform->addElement('select', 'participantslist', get_string('mform_select_participantslist', 'mod_adele'), $participantslist);
+        $mform->addElement('autocomplete', 'participantslist', get_string('mform_select_participantslist', 'mod_adele'),
+            $participantslist);
 
         // Add standard elements.
         $this->standard_coursemodule_elements();

@@ -15,17 +15,27 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Plugin capabilities are defined here.
  *
  * @package     mod_adele
- * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @author      Jacob Viertel
+ * @copyright  2024 Wunderbyte GmbH
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+ defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_adele';
-$plugin->release = '0.1.0';
-$plugin->version = 2024011821;
-$plugin->requires = 2022112800;
-$plugin->maturity = MATURITY_ALPHA;
+ $observers = [
+    [
+        'eventname' => '\core\event\course_module_created',
+        'callback' => 'mod_adele_observer::saved_module',
+    ],
+    [
+        'eventname' => '\core\event\course_module_updated',
+        'callback' => 'mod_adele_observer::saved_module',
+    ],
+    [
+        'eventname' => '\core\event\user_enrolment_created',
+        'callback' => 'mod_adele_observer::user_enrolment_created',
+    ],
+ ];
