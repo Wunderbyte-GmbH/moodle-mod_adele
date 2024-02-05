@@ -101,7 +101,7 @@ function adele_delete_instance($id) {
 /**
  * Sets content of mod.
  *
- * @param cm_info cm
+ * @param object cm
  */
 function mod_adele_cm_info_view(cm_info $cm) {
     global $DB, $PAGE, $USER;

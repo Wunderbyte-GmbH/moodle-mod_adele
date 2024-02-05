@@ -33,6 +33,7 @@ $string['adelename_help'] = 'Help for Adele';
 $string['adelefieldset'] = 'Adele Fieldset';
 $string['adelesettings'] = 'Adele Settings';
 $string['pluginadministration'] = 'Adele Plugin Administration';
+$string['adele:addinstance'] = 'Add Adele Instance';
 
 // Capabilities.
 $string['adele:addlearningpath'] = 'Can add learning paths';

@@ -102,7 +102,7 @@ class local_adele {
      * Get all tests.
      *
      * @param string $courseid
-     * @param string $learningpathid
+     * @param string $internalcatquizid
      * @return array
      */
     public static function get_alise_compability($internalcatquizid, $courseid) {
