@@ -44,8 +44,8 @@ class local_adele {
     /**
      * Get all tests.
      *
-     * @param string $courseid
-     * @param string $learningpathid
+     * @param string $learningpathid The ID of the learning path.
+     * @param string $courseid       The ID of the course.
      * @return array
      */
     public static function get_internalquuiz_id($learningpathid, $courseid) {
@@ -101,8 +101,8 @@ class local_adele {
     /**
      * Get all tests.
      *
-     * @param string $courseid
-     * @param string $internalcatquizid
+     * @param string $internalcatquizid The ID of the internal catquiz.
+     * @param string $courseid          The ID of the course.
      * @return array
      */
     public static function get_alise_compability($internalcatquizid, $courseid) {
