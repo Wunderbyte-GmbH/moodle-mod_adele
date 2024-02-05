@@ -44,6 +44,7 @@ class local_adele {
     /**
      * Get all tests.
      *
+     * @param string $courseid
      * @param string $learningpathid
      * @return array
      */
@@ -100,6 +101,7 @@ class local_adele {
     /**
      * Get all tests.
      *
+     * @param string $courseid
      * @param string $learningpathid
      * @return array
      */

@@ -23,9 +23,19 @@
  */
 
 namespace mod_adele\event;
-
+/**
+ * Class course_module_viewed
+ *
+ * @package     mod_adele
+ * @author      Jacob Viertel
+ * @copyright  2024 Wunderbyte GmbH
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class course_module_viewed extends \core\event\course_module_viewed {
 
+    /**
+     * Entities init.
+     */
     protected function init() {
         $this->data['objecttable'] = 'adele';
         parent::init();

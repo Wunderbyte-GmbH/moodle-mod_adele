@@ -49,7 +49,7 @@ class mod_adele_mod_form extends moodleform_mod {
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
         // Adding the standard "name" field.
-        $mform->addElement('text', 'name', get_string('adelename', 'mod_adele'), array('size' => '64'));
+        $mform->addElement('text', 'name', get_string('adelename', 'mod_adele'), ['size' => '64']);
 
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);

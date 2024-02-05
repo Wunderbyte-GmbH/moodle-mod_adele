@@ -88,23 +88,28 @@ function adele_update_instance($moduleinstance, $mform = null) {
 function adele_delete_instance($id) {
     global $DB;
 
-    $exists = $DB->get_record('adele', array('id' => $id));
+    $exists = $DB->get_record('adele', ['id' => $id]);
     if (!$exists) {
         return false;
     }
 
-    $DB->delete_records('adele', array('id' => $id));
+    $DB->delete_records('adele', ['id' => $id]);
 
     return true;
 }
 
+/**
+ * Sets content of mod.
+ *
+ * @param cm_info cm
+ */
 function mod_adele_cm_info_view(cm_info $cm) {
     global $DB, $PAGE, $USER;
     $learningpathmod = $DB->get_record(
       'adele',
       [
         'id' => $cm->instance,
-        'course' => $cm->course
+        'course' => $cm->course,
       ],
       'id, learningpathid, view, userlist'
     );

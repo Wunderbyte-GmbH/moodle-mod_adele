@@ -17,7 +17,7 @@
 /**
  * Adele capabilities definition
  *
- * @package    mod
+ * @package    mod_adele
  * @subpackage adele
  * @category   access
  * @copyright  2024 onwards Remote-Learner {@link http://www.remote-learner.ca/}
@@ -26,24 +26,24 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$capabilities = array(
+$capabilities = [
     // Ability to add learning path to the course.
-    'mod/adele:addinstance' => array(
+    'mod/adele:addinstance' => [
         'riskbitmask' => RISK_XSS,
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => array(
+        'archetypes' => [
             'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        ),
-    ),
+            'manager' => CAP_ALLOW,
+            ],
+    ],
     // Ability to see the learning path you have been assigned.
-    'mod/adele:readinstance' => array(
+    'mod/adele:readinstance' => [
       'riskbitmask' => RISK_XSS,
       'captype' => 'view',
       'contextlevel' => CONTEXT_COURSE,
-      'archetypes' => array(
+      'archetypes' => [
           'user' => CAP_ALLOW,
-      ),
-  ),
-);
+      ],
+    ],
+];

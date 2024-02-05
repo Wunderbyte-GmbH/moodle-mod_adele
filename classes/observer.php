@@ -26,9 +26,6 @@ use core\event\base;
 use local_adele\enrollment;
 use local_adele\learning_paths;
 
-defined('MOODLE_INTERNAL') || die();
-
-
 /**
  * Event observer for local_adele.
  */
@@ -41,7 +38,7 @@ class mod_adele_observer {
      * We enroll the users that meet the criteria into the course.
      *
      * @param base $data
-     * @param base
+     * @return base
      */
     public static function saved_module($data) {
         global $DB;
@@ -91,7 +88,7 @@ class mod_adele_observer {
      * We enrol the user to the learningpath.
      *
      * @param base $data
-     * @param base
+     * @return base
      */
     public static function user_enrolment_created($data) {
         global $DB;
