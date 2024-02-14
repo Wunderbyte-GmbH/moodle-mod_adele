@@ -67,11 +67,12 @@ class local_adele {
             $learningpathlocal->json = json_decode($learningpathlocal->json);
             if ($learningpathlocal->json->tree->nodes) {
                 foreach ($learningpathlocal->json->tree->nodes as $node) {
-                    if ($node->completion->nodes) {
+                    if (isset($node->completion) && $node->completion->nodes) {
                         foreach ($node->completion->nodes as $completionnode) {
                             if (
                                 isset($completionnode->data->label) &&
                                 $completionnode->data->label == 'catquiz' &&
+                                isset($completionnode->data->value->testid) &&
                                 $completionnode->data->value->testid == '0'
                             ) {
                                 if ($internalcatquizid && $internalcatquizid != $completionnode->data->value->parentscales) {

@@ -82,20 +82,20 @@ class mod_adele_mod_form extends moodleform_mod {
         $mform->addElement('autocomplete', 'learningpathid', get_string('mform_select_learningpath', 'mod_adele'), $select);
 
         $views = [
-          1 => 'Show Learningpath on top level',
-          2 => 'Show Learningpath on floor level',
+          1 => get_string('mform_options_view_top_level', 'mod_adele'),
+          2 => get_string('mform_options_view_floor_level', 'mod_adele'),
         ];
         $mform->addElement('select', 'view', get_string('mform_select_view', 'mod_adele'), $views);
 
         $userlist = [
-          1 => 'Students see overview of all students',
-          2 => 'Students see only their own results',
+          1 => get_string('mform_options_userlist_all', 'mod_adele'),
+          2 => get_string('mform_options_userlist_only', 'mod_adele'),
         ];
         $mform->addElement('select', 'userlist', get_string('mform_select_userlist', 'mod_adele'), $userlist);
 
         $participantslist = [
-          1 => 'Everyone who is subscribed who is subscribed to that course',
-          2 => 'Everyone is subscribbed who is in one starting node',
+          1 => get_string('mform_options_participantslist_this_course', 'mod_adele'),
+          2 => get_string('mform_options_participantslist_starting_courses', 'mod_adele'),
         ];
         $mform->addElement('autocomplete', 'participantslist', get_string('mform_select_participantslist', 'mod_adele'),
             $participantslist);
