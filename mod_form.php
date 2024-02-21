@@ -98,7 +98,7 @@ class mod_adele_mod_form extends moodleform_mod {
           2 => get_string('mform_options_participantslist_starting_courses', 'mod_adele'),
         ];
         $mform->addElement('autocomplete', 'participantslist', get_string('mform_select_participantslist', 'mod_adele'),
-            $participantslist);
+            $participantslist, ['multiple' => true]);
 
         // Add standard elements.
         $this->standard_coursemodule_elements();
