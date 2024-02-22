@@ -48,35 +48,12 @@ class mod_adele_observer {
                 ['id' => $data->other['instanceid']],
                 'learningpathid, participantslist'
             );
-            if ($adelelp->participantslist == '1') {
-                // Get all users and subscribe them to learning path.
-                $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
-                $coursecontext = context_course::instance($data->courseid);
-                $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id, u.username, u.firstname, u.lastname, u.email');
-                $userparams = new stdClass();
-                $userparams->relateduserid = $data->userid;
-                foreach ($enrolledusers as $user) {
-                    $userparams->userid = $user->id;
-                    enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
-                }
-            } else if ($adelelp->participantslist == '2') {
-                // Get all users from starting nodes an subscribe.
-                $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
-                $learningpath->json = json_decode($learningpath->json, true);
-                foreach ($learningpath->json['tree']['nodes'] as $node) {
-                    if (in_array('starting_node', $node['parentCourse'])) {
-                        foreach ($node['data']['course_node_id'] as $startingnodeid) {
-                            $coursecontext = context_course::instance($startingnodeid);
-                            $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id');
-                            $userparams = new stdClass();
-                            $userparams->userid = $data->userid;
-                            foreach ($enrolledusers as $user) {
-                                $userparams->relateduserid = $user->id;
-                                enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
-                            }
-                        }
-                    }
-
+            $adelelp->participantslist = explode(',', $adelelp->participantslist);
+            foreach ($adelelp->participantslist as $participantslist) {
+                if ($participantslist == '1') {
+                    self::enroll_all_participants($adelelp, $data);
+                } else if ($participantslist == '2') {
+                    self::enroll_starting_nodes_participants($adelelp, $data);
                 }
             }
         }
@@ -108,5 +85,70 @@ class mod_adele_observer {
             }
         }
         return $data;
+    }
+
+    /**
+     * Enroll all participants inside the course.
+     *
+     * @param object $adelelp
+     * @param base $data
+     */
+    public static function enroll_all_participants($adelelp, $data) {
+        $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
+        $coursecontext = context_course::instance($data->courseid);
+        $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id, u.username, u.firstname, u.lastname, u.email');
+        $userparams = new stdClass();
+        $userparams->relateduserid = $data->userid;
+        foreach ($enrolledusers as $user) {
+            $userparams->userid = $user->id;
+            enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
+        }
+    }
+
+    /**
+     * Enroll all participants inside the starting nodes.
+     *
+     * @param object $adelelp
+     * @param base $data
+     */
+    public static function enroll_starting_nodes_participants($adelelp, $data) {
+        $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
+        $learningpath->json = json_decode($learningpath->json, true);
+        foreach ($learningpath->json['tree']['nodes'] as $node) {
+            if (in_array('starting_node', $node['parentCourse'])) {
+                foreach ($node['data']['course_node_id'] as $startingnodeid) {
+                    $coursecontext = context_course::instance($startingnodeid);
+                    $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id');
+                    $userparams = new stdClass();
+                    $userparams->userid = $data->userid;
+                    foreach ($enrolledusers as $user) {
+                        self::subscribe_user_course($data, $user);
+                        $userparams->relateduserid = $user->id;
+                        enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Enroll all participants inside the starting nodes.
+     *
+     * @param base $data
+     * @param object $user
+     */
+    public static function subscribe_user_course($data, $user) {
+        global $DB;
+        if (enrol_is_enabled('manual') && $enrol = enrol_get_plugin('manual')) {
+            $instances = $DB->get_records(
+                'enrol',
+                ['enrol' => 'manual', 'courseid' => $data->courseid, 'status' => ENROL_INSTANCE_ENABLED],
+                'sortorder,id ASC'
+            );
+            if ($instances) {
+                $instance = reset($instances); // Use the first manual enrolment plugin in the course.
+                $enrol->enrol_user($instance, $user->id);
+            }
+        }
     }
 }

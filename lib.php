@@ -55,6 +55,8 @@ function adele_add_instance($moduleinstance, $mform = null) {
 
     $moduleinstance->timecreated = time();
 
+    $moduleinstance->participantslist = implode(',', $moduleinstance->participantslist);
+
     $id = $DB->insert_record('adele', $moduleinstance);
 
     return $id;
@@ -75,6 +77,8 @@ function adele_update_instance($moduleinstance, $mform = null) {
 
     $moduleinstance->timemodified = time();
     $moduleinstance->id = $moduleinstance->instance;
+
+    $moduleinstance->participantslist = implode(',', $moduleinstance->participantslist);
 
     return $DB->update_record('adele', $moduleinstance);
 }
