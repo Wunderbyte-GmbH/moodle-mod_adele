@@ -98,9 +98,9 @@ class mod_adele_observer {
         $coursecontext = context_course::instance($data->courseid);
         $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id, u.username, u.firstname, u.lastname, u.email');
         $userparams = new stdClass();
-        $userparams->relateduserid = $data->userid;
+        $userparams->userid = $data->userid;
         foreach ($enrolledusers as $user) {
-            $userparams->userid = $user->id;
+            $userparams->relateduserid = $user->id;
             enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
         }
     }

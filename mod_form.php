@@ -67,10 +67,13 @@ class mod_adele_mod_form extends moodleform_mod {
         } else {
             $this->add_intro_editor();
         }
-
-        // Adding the rest of mod_adele settings, spreading all them into this fieldset
-        // ... or adding more fieldsets ('header' elements) if needed for better logic.
-        $mform->addElement('static', 'label1', 'adelesettings', get_string('adelesettings', 'mod_adele'));
+        // Adding a link after the header.
+        $mform->addElement('static', 'link',
+          get_string('mform_options_create_learningpath', 'mod_adele'),
+          '<a href="/local/adele/index.php#/learningpaths/edit" target="blank">' .
+          get_string('mform_options_link_create_learningpath', 'mod_adele') .
+          '</a>'
+        );
         $mform->addElement('header', 'adelefieldset', get_string('adelefieldset', 'mod_adele'));
 
         $select = [];

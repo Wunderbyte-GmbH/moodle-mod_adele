@@ -108,7 +108,7 @@ function adele_delete_instance($id) {
  * @param cm_info $cm The course module information object.
  */
 function mod_adele_cm_info_view(cm_info $cm) {
-    global $DB, $PAGE, $USER;
+    global $DB, $PAGE, $USER, $OUTPUT;
     $learningpathmod = $DB->get_record(
       'adele',
       [
@@ -125,17 +125,17 @@ function mod_adele_cm_info_view(cm_info $cm) {
         ) {
 
         $alisecompatible = local_adele::get_internalquuiz_id($learningpathmod->learningpathid, $PAGE->course->id);
-
-        if (has_capability('mod/adele:addinstance', context_system::instance())) {
+        $modulecontext = context_module::instance($cm->id);
+        if (has_capability('mod/adele:addinstance', $modulecontext)) {
             if ($alisecompatible['alisecompatible']) {
-                $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
-                $html = '
-                    <div id="local-adele-app" name="local-adele-app" view="teacher" learningpath="' .
-                    $learningpathmod->learningpathid . '" user="' . $USER->id . '" userlist="' .
-                    $learningpathmod->userlist . '">
-                      <router-view></router-view>
-                    </div>
-                ';
+                $html = $OUTPUT->render_from_template('local_adele/initview',
+                  [
+                    'userid' => $USER->id,
+                    'contextid' => $modulecontext->id,
+                    'learningpath' => $learningpathmod->learningpathid,
+                    'userlist' => $learningpathmod->userlist,
+                    'view' => "teacher"
+                ]);
             } else {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
                     padding: 15px; margin-bottom: 20px; color: #721c24;">
@@ -144,16 +144,16 @@ function mod_adele_cm_info_view(cm_info $cm) {
                 </div>';
             }
             $cm->set_content($html);
-        } else if (has_capability('mod/adele:readinstance', context_system::instance())) {
+        } else if (has_capability('mod/adele:readinstance', $modulecontext)) {
             if ($alisecompatible['alisecompatible']) {
-                $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
-                $html = '
-                    <div id="local-adele-app" name="local-adele-app" view="student" learningpath="' .
-                    $learningpathmod->learningpathid . '" user="' . $USER->id . '" userlist="' .
-                    $learningpathmod->userlist . '">
-                      <router-view></router-view>
-                    </div>
-                ';
+                $html = $OUTPUT->render_from_template('local_adele/initview',
+                  [
+                    'userid' => $USER->id,
+                    'contextid' => $modulecontext->id,
+                    'learningpath' => $learningpathmod->learningpathid,
+                    'userlist' => $learningpathmod->userlist,
+                    'view' => "student"
+                ]);
             } else {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
                     padding: 15px; margin-bottom: 20px; color: #721c24;">

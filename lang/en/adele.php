@@ -52,3 +52,7 @@ $string['mform_options_userlist_all'] = 'Jeder sieht eine Übersicht aller einge
 $string['mform_options_userlist_only'] = 'Jeder sieht nur seine eigenen Ergebnisse';
 $string['mform_options_participantslist_this_course'] = 'Jeder, der für diesen Kurs eingeschrieben ist';
 $string['mform_options_participantslist_starting_courses'] = 'Jeder ist eingeschrieben, der in einem Startknoten ist';
+$string['mform_options_create_learningpath'] = 'Create learning path';
+$string['mform_options_link_create_learningpath'] = 'Link to learning path creation';
+
+

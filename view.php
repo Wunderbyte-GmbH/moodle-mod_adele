@@ -78,17 +78,16 @@ if (
   $learningpath->learningpathid
 ) {
     $alisecompatible = local_adele::get_internalquuiz_id($learningpath->learningpathid, $PAGE->course->id);
-
-    if (has_capability('mod/adele:addinstance', context_system::instance())) {
+    if (has_capability('mod/adele:addinstance', $modulecontext)) {
         if ($alisecompatible['alisecompatible']) {
-            $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
-            echo <<<EOT
-            <div id="local-adele-app" name="local-adele-app"
-                view="teacher" learningpath="{$learningpath->learningpathid}"
-                user="{$USER->id}" userlist="{$learningpath->userlist}">
-              <router-view></router-view>
-            </div>
-            EOT;
+            echo $OUTPUT->render_from_template('local_adele/initview',
+            [
+              'userid' => $USER->id,
+              'contextid' => $modulecontext->id,
+              'learningpath' => $learningpath->learningpathid,
+              'userlist' => $learningpath->userlist,
+              'view' => "teacher"
+            ]);
         } else {
             echo <<<EOT
                 <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
@@ -98,16 +97,16 @@ if (
                 </div>
             EOT;
         }
-    } else if (has_capability('mod/adele:readinstance', context_system::instance())) {
+    } else if (has_capability('mod/adele:readinstance', $modulecontext)) {
         if ($alisecompatible['alisecompatible']) {
-            $PAGE->requires->js_call_amd('local_adele/app-lazy', 'init');
-            echo <<<EOT
-            <div id="local-adele-app"name="local-adele-app"
-                view="student" learningpath="{$learningpath->learningpathid}"
-                user="{$USER->id}" userlist="{$learningpath->userlist}">
-              <router-view></router-view>
-            </div>
-            EOT;
+            echo $OUTPUT->render_from_template('local_adele/initview',
+            [
+              'userid' => $USER->id,
+              'contextid' => $modulecontext->id,
+              'learningpath' => $learningpath->learningpathid,
+              'userlist' => $learningpath->userlist,
+              'view' => "student"
+            ]);
         } else {
             echo <<<EOT
                 <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
