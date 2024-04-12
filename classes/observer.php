@@ -77,7 +77,7 @@ class mod_adele_observer {
                     ['id' => $module->instance],
                     'learningpathid, participantslist'
                 );
-                if ($adelelp->participantslist == '1') {
+                if (isset($adelelp->participantslist) && $adelelp->participantslist == '1') {
                     // Subscribe user to learning path.
                     $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
                     enrollment::subscribe_user_to_learning_path($learningpath, $data);
@@ -93,7 +93,7 @@ class mod_adele_observer {
      * @param object $adelelp
      * @param base $data
      */
-    public static function enroll_all_participants($adelelp, $data) {
+    public static function enroll_all_participants($adelelp, $data, $update=false) {
         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
         $coursecontext = context_course::instance($data->courseid);
         $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id, u.username, u.firstname, u.lastname, u.email');
@@ -111,7 +111,7 @@ class mod_adele_observer {
      * @param object $adelelp
      * @param base $data
      */
-    public static function enroll_starting_nodes_participants($adelelp, $data) {
+    public static function enroll_starting_nodes_participants($adelelp, $data, $update=false) {
         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
         $learningpath->json = json_decode($learningpath->json, true);
         foreach ($learningpath->json['tree']['nodes'] as $node) {
