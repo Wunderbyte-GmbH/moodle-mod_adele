@@ -86,7 +86,8 @@ if (
               'contextid' => $modulecontext->id,
               'learningpath' => $learningpath->learningpathid,
               'userlist' => $learningpath->userlist,
-              'view' => "teacher"
+              'view' => "teacher",
+              'version' => moodle_major_version(),
             ]);
         } else {
             echo <<<EOT
@@ -105,7 +106,8 @@ if (
               'contextid' => $modulecontext->id,
               'learningpath' => $learningpath->learningpathid,
               'userlist' => $learningpath->userlist,
-              'view' => "student"
+              'view' => "student",
+              'version' => moodle_major_version(),
             ]);
         } else {
             echo <<<EOT

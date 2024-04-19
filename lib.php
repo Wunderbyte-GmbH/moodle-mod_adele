@@ -134,7 +134,8 @@ function mod_adele_cm_info_view(cm_info $cm) {
                     'contextid' => $modulecontext->id,
                     'learningpath' => $learningpathmod->learningpathid,
                     'userlist' => $learningpathmod->userlist,
-                    'view' => "teacher"
+                    'view' => "teacher",
+                    'version' => moodle_major_version(),
                 ]);
             } else {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
@@ -152,7 +153,8 @@ function mod_adele_cm_info_view(cm_info $cm) {
                     'contextid' => $modulecontext->id,
                     'learningpath' => $learningpathmod->learningpathid,
                     'userlist' => $learningpathmod->userlist,
-                    'view' => "student"
+                    'view' => "student",
+                    'version' => moodle_major_version(),
                 ]);
             } else {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
