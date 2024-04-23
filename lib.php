@@ -108,7 +108,7 @@ function adele_delete_instance($id) {
  * @param cm_info $cm The course module information object.
  */
 function mod_adele_cm_info_view(cm_info $cm) {
-    global $DB, $PAGE, $USER, $OUTPUT;
+    global $DB, $PAGE, $USER, $OUTPUT, $CFG;
     $learningpathmod = $DB->get_record(
       'adele',
       [
@@ -135,7 +135,7 @@ function mod_adele_cm_info_view(cm_info $cm) {
                     'learningpath' => $learningpathmod->learningpathid,
                     'userlist' => $learningpathmod->userlist,
                     'view' => "teacher",
-                    'version' => moodle_major_version(),
+                    'version' => $CFG->version,
                 ]);
             } else {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
@@ -154,7 +154,7 @@ function mod_adele_cm_info_view(cm_info $cm) {
                     'learningpath' => $learningpathmod->learningpathid,
                     'userlist' => $learningpathmod->userlist,
                     'view' => "student",
-                    'version' => moodle_major_version(),
+                    'version' => $CFG->version,
                 ]);
             } else {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;

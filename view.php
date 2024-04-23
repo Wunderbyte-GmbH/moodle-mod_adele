@@ -87,7 +87,7 @@ if (
               'learningpath' => $learningpath->learningpathid,
               'userlist' => $learningpath->userlist,
               'view' => "teacher",
-              'version' => moodle_major_version(),
+              'version' => $CFG->version,
             ]);
         } else {
             echo <<<EOT
@@ -107,7 +107,7 @@ if (
               'learningpath' => $learningpath->learningpathid,
               'userlist' => $learningpath->userlist,
               'view' => "student",
-              'version' => moodle_major_version(),
+              'version' => $CFG->version,
             ]);
         } else {
             echo <<<EOT
