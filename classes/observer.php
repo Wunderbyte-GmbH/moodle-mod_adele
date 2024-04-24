@@ -90,6 +90,8 @@ class mod_adele_observer {
     /**
      * Enroll all participants inside the course.
      *
+     * @param bool $update
+     * @param object $data
      * @param object $adelelp
      * @param base $data
      */
@@ -108,6 +110,8 @@ class mod_adele_observer {
     /**
      * Enroll all participants inside the starting nodes.
      *
+     * @param bool $update
+     * @param object $data
      * @param object $adelelp
      * @param base $data
      */
