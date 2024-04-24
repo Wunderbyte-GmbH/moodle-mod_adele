@@ -90,10 +90,9 @@ class mod_adele_observer {
     /**
      * Enroll all participants inside the course.
      *
-     * @param bool $update
-     * @param object $data
      * @param object $adelelp
      * @param base $data
+     * @param bool $update
      */
     public static function enroll_all_participants($adelelp, $data, $update=false) {
         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
@@ -110,10 +109,9 @@ class mod_adele_observer {
     /**
      * Enroll all participants inside the starting nodes.
      *
-     * @param bool $update
-     * @param object $data
      * @param object $adelelp
      * @param base $data
+     * @param bool $update
      */
     public static function enroll_starting_nodes_participants($adelelp, $data, $update=false) {
         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
