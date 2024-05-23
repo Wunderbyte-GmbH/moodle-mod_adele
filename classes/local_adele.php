@@ -55,7 +55,6 @@ class local_adele {
           'alisecompatible' => true,
           'msg' => '',
         ];
-
         $learningpathlocal = $DB->get_record(
           'local_adele_learning_paths',
           [
@@ -65,7 +64,7 @@ class local_adele {
         );
         if ($learningpathlocal) {
             $learningpathlocal->json = json_decode($learningpathlocal->json);
-            if ($learningpathlocal->json->tree->nodes) {
+            if (isset($learningpathlocal->json->tree->nodes)) {
                 foreach ($learningpathlocal->json->tree->nodes as $node) {
                     if (isset($node->completion) && $node->completion->nodes) {
                         foreach ($node->completion->nodes as $completionnode) {
