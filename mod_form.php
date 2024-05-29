@@ -82,7 +82,13 @@ class mod_adele_mod_form extends moodleform_mod {
             $select[$record['id']] = $record['name'];
         }
 
-        $mform->addElement('autocomplete', 'learningpathid', get_string('mform_select_learningpath', 'mod_adele'), $select);
+        $options = [
+          'noselectionstring' => get_string('mform_options_no_selection', 'mod_adele'),
+          'tags' => false,
+        ];
+
+        $mform->addElement('autocomplete', 'learningpathid', get_string('mform_select_learningpath', 'mod_adele'), $select,
+        $options);
 
         $views = [
           1 => get_string('mform_options_view_top_level', 'mod_adele'),

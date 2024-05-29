@@ -29,26 +29,31 @@ $string['pluginname'] = 'Adele';
 $string['modulenameplural'] = 'Adeles';
 $string['modulename'] = 'Adele';
 $string['adelename'] = 'Adele';
-$string['adelename_help'] = 'Help for Adele';
-$string['adelefieldset'] = 'Adele Fieldset';
-$string['adelesettings'] = 'Adele Settings';
-$string['pluginadministration'] = 'Adele Plugin Administration';
-$string['adele:addinstance'] = 'Add Adele Instance';
+$string['adelename_help'] = 'Hilfe für Adele';
+$string['adelefieldset'] = 'Adele Einstellungen';
+$string['adelesettings'] = 'Adele Einstellungen';
+$string['pluginadministration'] = 'Adele Plugin-Verwaltung';
+$string['adele:addinstance'] = 'Adele-Instanz hinzufügen';
 
 // Capabilities.
-$string['adele:addlearningpath'] = 'Can add learning paths';
-$string['mod/adele:seelearningpath'] = 'Can see learning paths';
+$string['adele:addlearningpath'] = 'Kann Lernpfade hinzufügen';
+$string['mod/adele:seelearningpath'] = 'Kann Lernpfade sehen';
 
 // Mform.
-$string['mform_select_learningpath'] = 'Chosen Learning Path';
-$string['mform_select_view'] = 'Choose view';
-$string['mform_select_userlist'] = 'Choose user list option';
-$string['mform_select_participantslist'] = 'Choose an option for how people get subscribed to the learning path';
+$string['mform_select_learningpath'] = 'Gewählter Lernpfad';
+$string['mform_select_view'] = 'Ansicht auswählen';
+$string['mform_select_userlist'] = 'Benutzerlistenoption auswählen';
+$string['mform_select_participantslist'] = 'Eine Option auswählen, wie Personen für den Lernpfad abonniert werden';
 
 // Mform options.
-$string['mform_options_view_top_level'] = 'Show Learning path on top level';
-$string['mform_options_view_floor_level'] = 'Show Learning path on floor level';
-$string['mform_options_userlist_all'] = 'Everyone sees overview of all subscribed participants results';
-$string['mform_options_userlist_only'] = 'Everyone sees only their own results';
-$string['mform_options_participantslist_this_course'] = 'Everyone who is subscribed to that course';
-$string['mform_options_participantslist_starting_courses'] = 'Everyone is subscribed who is in one starting node';
+$string['mform_options_view_top_level'] = 'Lernpfad auf oberster Ebene anzeigen';
+$string['mform_options_view_floor_level'] = 'Lernpfad auf unterster Ebene anzeigen';
+$string['mform_options_userlist_all'] = 'Jeder sieht eine Übersicht aller eingeschriebenen Teilnehmerergebnisse';
+$string['mform_options_userlist_only'] = 'Jeder sieht nur seine eigenen Ergebnisse';
+$string['mform_options_participantslist_this_course'] = 'Jeder, der für diesen Kurs eingeschrieben ist';
+$string['mform_options_participantslist_starting_courses'] = 'Jeder ist eingeschrieben, der in einem Startknoten ist';
+$string['mform_options_create_learningpath'] = 'Erstelle Lernpfad';
+$string['mform_options_link_create_learningpath'] = 'Link zur Erstellung eines Lernpfades';
+$string['mform_options_no_selection'] = 'Keine Auswahl';
+
+
