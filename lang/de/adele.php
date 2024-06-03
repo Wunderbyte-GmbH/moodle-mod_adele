@@ -25,15 +25,15 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Adele';
-$string['modulenameplural'] = 'Adeles';
-$string['modulename'] = 'Adele';
-$string['adelename'] = 'Adele';
-$string['adelename_help'] = 'Hilfe für Adele';
-$string['adelefieldset'] = 'Adele Einstellungen';
-$string['adelesettings'] = 'Adele Einstellungen';
-$string['pluginadministration'] = 'Adele Plugin-Verwaltung';
-$string['adele:addinstance'] = 'Adele-Instanz hinzufügen';
+$string['pluginname'] = 'Lernpfad';
+$string['modulenameplural'] = 'Lernpfade';
+$string['modulename'] = 'Lernpfad';
+$string['adelename'] = 'Lernpfad';
+$string['adelename_help'] = 'Hilfe für Lernpfad';
+$string['adelefieldset'] = 'Lernpfad Einstellungen';
+$string['adelesettings'] = 'Lernpfad Einstellungen';
+$string['pluginadministration'] = 'Lernpfad Plugin-Verwaltung';
+$string['adele:addinstance'] = 'Lernpfad-Instanz hinzufügen';
 
 // Capabilities.
 $string['adele:addlearningpath'] = 'Kann Lernpfade hinzufügen';
