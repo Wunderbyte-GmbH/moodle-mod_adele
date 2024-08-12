@@ -132,6 +132,7 @@ function mod_adele_cm_info_view(cm_info $cm) {
                   [
                     'userid' => $USER->id,
                     'contextid' => $modulecontext->id,
+                    'quizsetting' => get_config('local_adele', 'quizsettings'),
                     'learningpath' => $learningpathmod->learningpathid,
                     'userlist' => $learningpathmod->userlist,
                     'view' => "teacher",
@@ -151,6 +152,7 @@ function mod_adele_cm_info_view(cm_info $cm) {
                   [
                     'userid' => $USER->id,
                     'contextid' => $modulecontext->id,
+                    'quizsetting' => get_config('local_adele', 'quizsettings'),
                     'learningpath' => $learningpathmod->learningpathid,
                     'userlist' => $learningpathmod->userlist,
                     'view' => "student",

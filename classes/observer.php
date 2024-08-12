@@ -80,6 +80,7 @@ class mod_adele_observer {
                 if (isset($adelelp->participantslist) && $adelelp->participantslist == '1') {
                     // Subscribe user to learning path.
                     $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
+                    $coursecontext = context_course::instance($data->courseid);
                     enrollment::subscribe_user_to_learning_path($learningpath, $data, $coursecontext->instanceid);
                 }
             }

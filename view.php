@@ -84,6 +84,7 @@ if (
             [
               'userid' => $USER->id,
               'contextid' => $modulecontext->id,
+              'quizsetting' => get_config('local_adele', 'quizsettings'),
               'learningpath' => $learningpath->learningpathid,
               'userlist' => $learningpath->userlist,
               'view' => "teacher",
@@ -104,6 +105,7 @@ if (
             [
               'userid' => $USER->id,
               'contextid' => $modulecontext->id,
+              'quizsetting' => get_config('local_adele', 'quizsettings'),
               'learningpath' => $learningpath->learningpathid,
               'userlist' => $learningpath->userlist,
               'view' => "student",
