@@ -27,6 +27,7 @@ use local_adele\learning_paths;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/moodleform_mod.php');
+require_once($CFG->dirroot . '/local/adele/lib.php');
 
 /**
  * Module instance settings form.
@@ -76,9 +77,18 @@ class mod_adele_mod_form extends moodleform_mod {
         );
         $mform->addElement('header', 'adelefieldset', get_string('adelefieldset', 'mod_adele'));
 
+        $sessionvalue =
+          isset($_SESSION[SESSION_KEY_ADELE]) ?
+          $_SESSION[SESSION_KEY_ADELE] :
+          null;
+
+        $records = learning_paths::get_learning_paths(
+            true,
+            $sessionvalue
+        );
+
         $select = [];
-        $records = learning_paths::get_learning_paths();
-        foreach ($records as $record) {
+        foreach ($records['edit'] as $record) {
             $select[$record['id']] = $record['name'];
         }
 
