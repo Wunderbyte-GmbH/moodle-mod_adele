@@ -136,6 +136,7 @@ function mod_adele_cm_info_view(cm_info $cm) {
                     'learningpath' => $learningpathmod->learningpathid,
                     'userlist' => $learningpathmod->userlist,
                     'view' => "teacher",
+                    'wwwroot' => $CFG->wwwroot,
                     'version' => $CFG->version,
                 ]);
             } else {
@@ -156,6 +157,7 @@ function mod_adele_cm_info_view(cm_info $cm) {
                     'learningpath' => $learningpathmod->learningpathid,
                     'userlist' => $learningpathmod->userlist,
                     'view' => "student",
+                    'wwwroot' => $CFG->wwwroot,
                     'version' => $CFG->version,
                 ]);
             } else {

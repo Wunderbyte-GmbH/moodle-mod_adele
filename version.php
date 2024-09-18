@@ -26,9 +26,9 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_adele';
 $plugin->release = '0.1.0';
-$plugin->version = 2024060300;
+$plugin->version = 2024091800;
 $plugin->requires = 2022112800;
 $plugin->maturity = MATURITY_ALPHA;
 $plugin->dependencies = [
-    'local_adele' => 2024060300,
+    'local_adele' => 2024091800,
 ];

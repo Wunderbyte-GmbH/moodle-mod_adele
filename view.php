@@ -88,6 +88,7 @@ if (
               'learningpath' => $learningpath->learningpathid,
               'userlist' => $learningpath->userlist,
               'view' => "teacher",
+              'wwwroot' => $CFG->wwwroot,
               'version' => $CFG->version,
             ]);
         } else {
@@ -109,6 +110,7 @@ if (
               'learningpath' => $learningpath->learningpathid,
               'userlist' => $learningpath->userlist,
               'view' => "student",
+              'wwwroot' => $CFG->wwwroot,
               'version' => $CFG->version,
             ]);
         } else {
