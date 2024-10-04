@@ -99,6 +99,7 @@ class mod_adele_mod_form extends moodleform_mod {
 
         $mform->addElement('autocomplete', 'learningpathid', get_string('mform_select_learningpath', 'mod_adele'), $select,
         $options);
+        $mform->addRule('learningpathid', null, 'required', null, 'client');
 
         $views = [
           1 => get_string('mform_options_view_top_level', 'mod_adele'),
