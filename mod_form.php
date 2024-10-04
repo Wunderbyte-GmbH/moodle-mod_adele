@@ -99,6 +99,7 @@ class mod_adele_mod_form extends moodleform_mod {
 
         $mform->addElement('autocomplete', 'learningpathid', get_string('mform_select_learningpath', 'mod_adele'), $select,
         $options);
+        $mform->addRule('learningpathid', null, 'required', null, 'client');
 
         $views = [
           1 => get_string('mform_options_view_top_level', 'mod_adele'),
@@ -118,6 +119,7 @@ class mod_adele_mod_form extends moodleform_mod {
         ];
         $mform->addElement('autocomplete', 'participantslist', get_string('mform_select_participantslist', 'mod_adele'),
             $participantslist, ['multiple' => true]);
+        $mform->addRule('participantslist', null, 'required', null, 'client');
 
         // Add standard elements.
         $this->standard_coursemodule_elements();
