@@ -69,9 +69,11 @@ class mod_adele_mod_form extends moodleform_mod {
             $this->add_intro_editor();
         }
         // Adding a link after the header.
+        $editorurl = new moodle_url('/local/adele/index.php#/learningpaths/edit',);
+
         $mform->addElement('static', 'link',
           get_string('mform_options_create_learningpath', 'mod_adele'),
-          '<a href="/local/adele/index.php#/learningpaths/edit" target="blank">' .
+          '<a class ="btn btn-secondary" href="'.$editorurl.'" target="blank">' .
           get_string('mform_options_link_create_learningpath', 'mod_adele') .
           '</a>'
         );
