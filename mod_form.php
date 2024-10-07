@@ -71,7 +71,7 @@ class mod_adele_mod_form extends moodleform_mod {
         // Adding a link after the header.
         $mform->addElement('static', 'link',
           get_string('mform_options_create_learningpath', 'mod_adele'),
-          '<a href="/local/adele/index.php#/learningpaths/edit" target="blank">' .
+          '<a href="' . $CFG->wwwroot . '/local/adele/index.php#/learningpaths/edit" target="blank">' .
           get_string('mform_options_link_create_learningpath', 'mod_adele') .
           '</a>'
         );
@@ -88,17 +88,26 @@ class mod_adele_mod_form extends moodleform_mod {
         );
 
         $select = [];
+        $select[] = null;
         foreach ($records['edit'] as $record) {
             $select[$record['id']] = $record['name'];
         }
 
         $options = [
+          'multiple' => false,
           'noselectionstring' => get_string('mform_options_no_selection', 'mod_adele'),
           'tags' => false,
         ];
 
-        $mform->addElement('autocomplete', 'learningpathid', get_string('mform_select_learningpath', 'mod_adele'), $select,
-        $options);
+        $mform->addElement(
+          'autocomplete',
+          'learningpathid',
+          get_string('mform_select_learningpath', 'mod_adele'),
+          $select,
+          $options
+        );
+
+        $mform->addRule('learningpathid', get_string('mform_options_required'), 'required', null, 'client');
 
         $views = [
           1 => get_string('mform_options_view_top_level', 'mod_adele'),
@@ -116,8 +125,13 @@ class mod_adele_mod_form extends moodleform_mod {
           1 => get_string('mform_options_participantslist_this_course', 'mod_adele'),
           2 => get_string('mform_options_participantslist_starting_courses', 'mod_adele'),
         ];
-        $mform->addElement('autocomplete', 'participantslist', get_string('mform_select_participantslist', 'mod_adele'),
-            $participantslist, ['multiple' => true]);
+        $mform->addElement(
+          'autocomplete',
+          'participantslist',
+          get_string('mform_select_participantslist', 'mod_adele'),
+          $participantslist,
+          ['multiple' => true]
+        );
 
         // Add standard elements.
         $this->standard_coursemodule_elements();

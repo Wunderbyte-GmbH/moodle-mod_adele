@@ -55,3 +55,4 @@ $string['mform_options_participantslist_starting_courses'] = 'Everyone is subscr
 $string['mform_options_create_learningpath'] = 'Create learning path';
 $string['mform_options_link_create_learningpath'] = 'Link to learning path creation';
 $string['mform_options_no_selection'] = 'No selection';
+$string['mform_options_required'] = 'required';

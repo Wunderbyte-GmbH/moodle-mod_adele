@@ -123,7 +123,6 @@ function mod_adele_cm_info_view(cm_info $cm) {
           $learningpathmod->view == 1 &&
           $learningpathmod->learningpathid
         ) {
-
         $alisecompatible = local_adele::get_internalquuiz_id($learningpathmod->learningpathid, $PAGE->course->id);
         $modulecontext = context_module::instance($cm->id);
         if (has_capability('mod/adele:addinstance', $modulecontext)) {
