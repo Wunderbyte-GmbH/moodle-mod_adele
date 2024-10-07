@@ -133,6 +133,8 @@ class mod_adele_mod_form extends moodleform_mod {
           ['multiple' => true]
         );
 
+        $mform->addRule('participantslist', get_string('mform_options_required'), 'required', null, 'client');
+
         // Add standard elements.
         $this->standard_coursemodule_elements();
 
