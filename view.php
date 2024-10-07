@@ -74,7 +74,7 @@ echo $OUTPUT->header();
 if (
   isloggedin() &&
   !isguestuser() &&
-  $learningpath->view == 1 &&
+  $learningpath->view >= 1 &&
   $learningpath->learningpathid
 ) {
     $alisecompatible = local_adele::get_internalquuiz_id($learningpath->learningpathid, $PAGE->course->id);

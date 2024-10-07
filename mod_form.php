@@ -107,7 +107,7 @@ class mod_adele_mod_form extends moodleform_mod {
           $options
         );
 
-        $mform->addRule('learningpathid', get_string('mform_options_required'), 'required', null, 'client');
+        $mform->addRule('learningpathid', get_string('mform_options_required', 'mod_adele'), 'required', null, 'client');
 
         $views = [
           1 => get_string('mform_options_view_top_level', 'mod_adele'),
@@ -133,12 +133,29 @@ class mod_adele_mod_form extends moodleform_mod {
           ['multiple' => true]
         );
 
-        $mform->addRule('participantslist', get_string('mform_options_required'), 'required', null, 'client');
+        $mform->addRule('participantslist', get_string('mform_options_required', 'mod_adele'), 'required', null, 'client');
 
         // Add standard elements.
         $this->standard_coursemodule_elements();
 
         // Add standard buttons.
         $this->add_action_buttons();
+    }
+
+    /**
+     * Server-side validation
+     */
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        if (empty($data['learningpathid'])) {
+            $errors['learningpathid'] = get_string('mform_options_required', 'mod_adele');
+        }
+
+        if (empty($data['participantslist'])) {
+            $errors['participantslist'] = get_string('mform_options_required', 'mod_adele');
+        }
+
+        return $errors;
     }
 }
