@@ -144,8 +144,11 @@ class mod_adele_mod_form extends moodleform_mod {
 
     /**
      * Server-side validation
+     * @param array $data
+     * @param array $files
+     * @return array
      */
-    public function validation($data, $files) {
+    public function validation($data, $files): array {
         $errors = parent::validation($data, $files);
 
         if (empty($data['learningpathid'])) {
