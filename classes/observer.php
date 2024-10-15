@@ -127,7 +127,7 @@ class mod_adele_observer {
                     foreach ($enrolledusers as $user) {
                         self::subscribe_user_course($data, $user);
                         $userparams->relateduserid = $user->id;
-                        enrollment::subscribe_user_to_learning_path($learningpath, $userparams, $coursecontext->instanceid);
+                        enrollment::subscribe_user_to_learning_path($learningpath, $userparams, $data->courseid);
                     }
                 }
             }
