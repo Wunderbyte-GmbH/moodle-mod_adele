@@ -80,20 +80,12 @@ class mod_adele_mod_form extends moodleform_mod {
           '</a>'
         );
 
-        $sessionvalue =
-          isset($_SESSION[SESSION_KEY_ADELE]) ?
-          $_SESSION[SESSION_KEY_ADELE] :
-          null;
-
-        $records = learning_paths::get_learning_paths(
-            true,
-            $sessionvalue
-        );
+        $records = learning_paths::get_editable_learning_paths();
 
         $select = [];
         $select[] = null;
-        foreach ($records['edit'] as $record) {
-            $select[$record['id']] = $record['name'];
+        foreach ($records as $record) {
+            $select[$record->id] = $record->name;
         }
 
         $options = [

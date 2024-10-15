@@ -30,5 +30,5 @@ $plugin->version = 2024101400;
 $plugin->requires = 2022112800;
 $plugin->maturity = MATURITY_ALPHA;
 $plugin->dependencies = [
-    'local_adele' => 2024091800,
+    'local_adele' => 2024101500,
 ];
