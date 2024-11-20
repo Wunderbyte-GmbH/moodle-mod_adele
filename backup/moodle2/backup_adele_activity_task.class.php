@@ -44,6 +44,10 @@ class backup_adele_activity_task extends backup_activity_task {
         $this->add_step(new backup_adele_activity_structure_step('adele_structure', 'adele.xml'));
     }
 
+    public function get_fileareas() {
+        return []; // Keine Dateien.
+    }
+
    /**
     * Encodes URLs to the activity instance for Moodle backup.
     *
@@ -51,12 +55,6 @@ class backup_adele_activity_task extends backup_activity_task {
     * @return string Encoded content with URLs converted.
     */
     public static function encode_content_links($content) {
-        global $CFG;
-
-        $base = preg_quote($CFG->wwwroot, '/');
-        $pattern = "/({$base}\/mod\/adele\/view\.php\?id=)([0-9]+)/";
-        $replacement = '$@ADELEVIEWBYID*$2@$';
-
-        return preg_replace($pattern, $replacement, $content);
+        return $content; // Keine Links zu encodieren.
     }
 }

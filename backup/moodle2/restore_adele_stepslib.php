@@ -36,7 +36,6 @@ class restore_adele_activity_structure_step extends restore_activity_structure_s
     protected function define_structure() {
         $paths = [];
         $paths[] = new restore_path_element('adele', '/activity/adele');
-
         return $paths;
     }
 
@@ -52,6 +51,11 @@ class restore_adele_activity_structure_step extends restore_activity_structure_s
 
         $data = (object)$data;
         $data->course = $this->get_courseid();
-        $DB->insert_record('adele', $data);
+        $newitemid = $DB->insert_record('adele', $data);
+        $this->set_mapping('adele', $data->id, $newitemid);
+    }
+
+    protected function after_execute() {
+        // Keine weiteren Schritte erforderlich.
     }
 }

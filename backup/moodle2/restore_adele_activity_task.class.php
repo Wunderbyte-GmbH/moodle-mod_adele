@@ -45,31 +45,19 @@ class restore_adele_activity_task extends restore_activity_task {
     }
 
     /**
-     * Determines if this task uses the Moodle file API.
-     *
-     * @return array
+     * Defines steps for the restore process.
      */
     public function get_fileareas() {
-        return ['intro'];
+        return null; // Keine Dateien.
     }
 
     /**
-     * Processes links encoded by the backup process.
+     * Decodes content links during restore.
      *
-     * @param string $content Encoded content with placeholders for URLs.
-     * @return string Decoded content with URLs restored.
+     * @param string $content The content containing encoded links.
+     * @return string The content with links decoded.
      */
     public static function decode_content_links($content) {
-        $pattern = '/\$@ADELEVIEWBYID\*([0-9]+)@\$/';
-        $replacement = '$@PLUGINFILE$/mod/adele/view.php?id=$1';
-
-        return preg_replace($pattern, $replacement, $content);
-    }
-
-    /**
-     * Returns the activity module's format version.
-     */
-    public function after_restore() {
-        // Any additional processing after restoring can be added here.
+        return $content; // No specific decoding needed for this activity.
     }
 }
