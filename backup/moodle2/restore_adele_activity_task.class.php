@@ -51,13 +51,23 @@ class restore_adele_activity_task extends restore_activity_task {
         return null; // Keine Dateien.
     }
 
-    /**
-     * Decodes content links during restore.
-     *
-     * @param string $content The content containing encoded links.
-     * @return string The content with links decoded.
+        /**
+     * Define the contents in the activity that must be
+     * processed by the link decoder
      */
-    public static function decode_content_links($content) {
-        return $content; // No specific decoding needed for this activity.
+    public static function define_decode_contents() {
+        $contents = [];
+
+        $contents[] = new restore_decode_content('adele', ['intro'], 'adele');
+
+        return $contents;
+    }
+
+    /**
+     * Define the decoding rules for links belonging
+     * to the activity to be executed by the link decoder
+     */
+    public static function define_decode_rules() {
+        return [];
     }
 }
