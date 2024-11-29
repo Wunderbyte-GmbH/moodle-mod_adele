@@ -83,7 +83,7 @@ class mod_adele_mod_form extends moodleform_mod {
         $records = learning_paths::get_editable_learning_paths();
 
         $select = [];
-        $select[] = null;
+        $select[0] = get_string('noselection', 'form');
         foreach ($records as $record) {
             $select[$record->id] = $record->name;
         }
@@ -101,6 +101,7 @@ class mod_adele_mod_form extends moodleform_mod {
           $select,
           $options
         );
+        $mform->setDefault('learningpathid', 0);
 
         $mform->addRule('learningpathid', get_string('mform_options_required', 'mod_adele'), 'required', null, 'client');
 
