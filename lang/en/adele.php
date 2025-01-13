@@ -32,6 +32,7 @@ $string['adelename'] = 'Learning path';
 $string['adelename_help'] = 'Help for Learning path';
 $string['adelefieldset'] = 'Learning path Settings';
 $string['adelesettings'] = 'Learning path Settings';
+$string['adele:readinstance'] = 'Read instance';
 $string['pluginadministration'] = 'Learning path Plugin Administration';
 $string['adele:addinstance'] = 'Add Learning path Instance';
 
