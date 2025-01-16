@@ -149,8 +149,14 @@ class mod_adele_observer {
                 'sortorder,id ASC'
             );
             if ($instances) {
-                $instance = reset($instances); // Use the first manual enrolment plugin in the course.
-                $enrol->enrol_user($instance, $user->id);
+                $context = context_course::instance($data->courseid);
+
+                $isenrolled = is_enrolled($context, $user->id);
+                if (!$isenrolled) {
+                    $instance = reset($instances); // Use the first manual enrolment plugin in the course.
+                    $selectedrole = get_config('local_adele', 'enroll_as_setting');
+                    $enrol->enrol_user($instance, $user->id, $selectedrole);
+                }
             }
         }
     }
