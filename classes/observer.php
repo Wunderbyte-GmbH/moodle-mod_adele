@@ -114,10 +114,10 @@ class mod_adele_observer {
      * @param base $data
      * @param bool $update
      */
-    public static function enroll_starting_nodes_participants($adelelp, $data, $update=false) {
+    public static function enroll_starting_nodes_participants($adelelp, $data, $update = false) {
         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
         $learningpath->json = json_decode($learningpath->json, true);
-        foreach ($learningpath->json['tree']['nodes'] as $node) {
+        foreach (($learningpath->json['tree']['nodes'] ?? []) as $node) {
             if (in_array('starting_node', $node['parentCourse'])) {
                 foreach ($node['data']['course_node_id'] as $startingnodeid) {
                     $coursecontext = context_course::instance($startingnodeid);
