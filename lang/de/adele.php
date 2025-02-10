@@ -32,6 +32,7 @@ $string['adelename'] = 'Lernpfad';
 $string['adelename_help'] = 'Hilfe für Lernpfad';
 $string['adelefieldset'] = 'Lernpfad Einstellungen';
 $string['adelesettings'] = 'Lernpfad Einstellungen';
+$string['adele:readinstance'] = 'Darf Lernpfad-Instanzen sehen';
 $string['pluginadministration'] = 'Lernpfad Plugin-Verwaltung';
 $string['adele:addinstance'] = 'Lernpfad-Instanz hinzufügen';
 
