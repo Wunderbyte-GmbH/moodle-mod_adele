@@ -45,5 +45,38 @@ function xmldb_adele_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2024022100, 'adele');
     }
 
+    if ($oldversion < 2024022100) {
+
+        // Changing type of field participantslist on table adele to char.
+        $table = new xmldb_table('adele');
+        $field = new xmldb_field('participantslist', XMLDB_TYPE_CHAR, '256', null, XMLDB_NOTNULL, null, '0', 'userlist');
+
+        // Launch change of type for field participantslist.
+        $dbman->change_field_type($table, $field);
+
+        // Adele savepoint reached.
+        upgrade_mod_savepoint(true, 2024022100, 'adele');
+    }
+
+    if ($oldversion < 2025030400) {
+        $table = new xmldb_table('adele');
+        $field = new xmldb_field(
+            'completionlearningpathfinished',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'introformat'
+        );
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2025030400, 'adele');
+    }
+
     return true;
 }

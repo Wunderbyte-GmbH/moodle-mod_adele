@@ -56,6 +56,5 @@ class restore_adele_activity_structure_step extends restore_activity_structure_s
     }
 
     protected function after_execute() {
-        // Keine weiteren Schritte erforderlich.
     }
 }

@@ -33,8 +33,9 @@ use mod_adele\local_adele;
 function adele_supports($feature) {
     switch ($feature) {
         case FEATURE_MOD_INTRO:
-            return true;
         case FEATURE_BACKUP_MOODLE2:
+        case FEATURE_COMPLETION_TRACKS_VIEWS:
+        case FEATURE_COMPLETION_HAS_RULES:
             return true;
         default:
             return null;
@@ -59,6 +60,9 @@ function adele_add_instance($moduleinstance, $mform = null) {
 
     $moduleinstance->participantslist = implode(',', $moduleinstance->participantslist);
 
+    $moduleinstance->completionlearningpathfinished =
+        isset($moduleinstance->completionlearningpathfinished) ? $moduleinstance->completionlearningpathfinished : 0;
+
     $id = $DB->insert_record('adele', $moduleinstance);
 
     return $id;
@@ -81,6 +85,9 @@ function adele_update_instance($moduleinstance, $mform = null) {
     $moduleinstance->id = $moduleinstance->instance;
 
     $moduleinstance->participantslist = implode(',', $moduleinstance->participantslist);
+
+    $moduleinstance->completionlearningpathfinished =
+        isset($moduleinstance->completionlearningpathfinished) ? $moduleinstance->completionlearningpathfinished : 0;
 
     return $DB->update_record('adele', $moduleinstance);
 }
@@ -171,4 +178,36 @@ function mod_adele_cm_info_view(cm_info $cm) {
             $cm->set_content($html);
         }
     }
+}
+
+/**
+ * This callback is used by the core to add any "extra" information to the activity. For example, completion info.
+ * @param stdClass $coursemodule
+ * @return false|cached_cm_info
+ */
+function adele_get_coursemodule_info(stdClass $coursemodule) {
+    global $DB;
+    $table = 'adele';
+    $learningpath = $DB->get_record(
+        $table,
+        ['id' => $coursemodule->instance],
+        'id, name, intro,introformat, completionlearningpathfinished'
+    );
+    if (!$learningpath) {
+        return false;
+    }
+
+    $result = new cached_cm_info();
+    $result->name = $learningpath->name;
+
+    if ($coursemodule->showdescription) {
+        $result->content = format_module_intro($table, $learningpath, $coursemodule->id, false);
+    }
+
+    if ($coursemodule->completion == COMPLETION_TRACKING_AUTOMATIC) {
+        $result->customdata['customcompletionrules']['completionlearningpathfinished'] =
+            $learningpath->completionlearningpathfinished;
+    }
+
+    return $result;
 }

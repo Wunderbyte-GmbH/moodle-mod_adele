@@ -26,7 +26,7 @@ use local_adele\learning_paths;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/course/moodleform_mod.php');
+require_once($CFG->dirroot . '/course/moodleform_mod.php');
 require_once($CFG->dirroot . '/local/adele/lib.php');
 
 /**
@@ -37,7 +37,6 @@ require_once($CFG->dirroot . '/local/adele/lib.php');
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_adele_mod_form extends moodleform_mod {
-
     /**
      * Defines forms elements
      */
@@ -49,7 +48,6 @@ class mod_adele_mod_form extends moodleform_mod {
         // Adding the "general" fieldset, where all the common settings are shown.
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
-        // Adding the standard "name" field.
         $mform->addElement('text', 'name', get_string('adelename', 'mod_adele'), ['size' => '64']);
 
         if (!empty($CFG->formatstringstriptags)) {
@@ -73,11 +71,13 @@ class mod_adele_mod_form extends moodleform_mod {
         // Adding a link after the header.
         $editorurl = new moodle_url('/local/adele/index.php#/learningpaths/edit');
 
-        $mform->addElement('static', 'link',
-          get_string('mform_options_create_learningpath', 'mod_adele'),
-          '<a class ="btn btn-secondary" href="'. $editorurl .'" target="blank">' .
-          get_string('mform_options_link_create_learningpath', 'mod_adele') .
-          '</a>'
+        $mform->addElement(
+            'static',
+            'link',
+            get_string('mform_options_create_learningpath', 'mod_adele'),
+            '<a class ="btn btn-secondary" href="'. $editorurl .'" target="blank">' .
+            get_string('mform_options_link_create_learningpath', 'mod_adele') .
+            '</a>'
         );
 
         $records = learning_paths::get_editable_learning_paths();
@@ -95,11 +95,11 @@ class mod_adele_mod_form extends moodleform_mod {
         ];
 
         $mform->addElement(
-          'autocomplete',
-          'learningpathid',
-          get_string('mform_select_learningpath', 'mod_adele'),
-          $select,
-          $options
+            'autocomplete',
+            'learningpathid',
+            get_string('mform_select_learningpath', 'mod_adele'),
+            $select,
+            $options
         );
         $mform->setDefault('learningpathid', 0);
 
@@ -122,19 +122,16 @@ class mod_adele_mod_form extends moodleform_mod {
           2 => get_string('mform_options_participantslist_starting_courses', 'mod_adele'),
         ];
         $mform->addElement(
-          'autocomplete',
-          'participantslist',
-          get_string('mform_select_participantslist', 'mod_adele'),
-          $participantslist,
-          ['multiple' => true]
+            'autocomplete',
+            'participantslist',
+            get_string('mform_select_participantslist', 'mod_adele'),
+            $participantslist,
+            ['multiple' => true]
         );
 
         $mform->addRule('participantslist', get_string('mform_options_required', 'mod_adele'), 'required', null, 'client');
 
-        // Add standard elements.
         $this->standard_coursemodule_elements();
-
-        // Add standard buttons.
         $this->add_action_buttons();
     }
 
@@ -156,5 +153,30 @@ class mod_adele_mod_form extends moodleform_mod {
         }
 
         return $errors;
+    }
+
+    /**
+     * Determines whether completion rules are enabled for this module.
+     * @return array
+     */
+    public function add_completion_rules() {
+        $mform = $this->_form;
+        $mform->addElement(
+            'checkbox',
+            'completionlearningpathfinished',
+            get_string('completionlearningpathfinished', 'mod_adele'),
+            get_string('completionlearningpathfinished:desc', 'mod_adele')
+        );
+
+        return ['completionlearningpathfinished'];
+    }
+
+    /**
+     * Determines whether completion rules are enabled for this module.
+     * @param array $data Submitted form data.
+     * @return bool
+     */
+    public function completion_rule_enabled($data) {
+        return !empty($data['completionlearningpathfinished']);
     }
 }

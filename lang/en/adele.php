@@ -25,35 +25,31 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Learning path';
-$string['modulenameplural'] = 'Learning paths';
-$string['modulename'] = 'Learning path';
+$string['adele:addinstance'] = 'Add Learning path Instance';
+$string['adele:addlearningpath'] = 'Can add learning paths';
+$string['adele:readinstance'] = 'Is allowed to view instances of the learning path plugin';
+$string['adelefieldset'] = 'Learning path Settings';
 $string['adelename'] = 'Learning path';
 $string['adelename_help'] = 'Help for Learning path';
-$string['adelefieldset'] = 'Learning path Settings';
 $string['adelesettings'] = 'Learning path Settings';
-$string['adele:readinstance'] = 'Is allowed to view instances of the learning path plugin';
-$string['pluginadministration'] = 'Learning path Plugin Administration';
-$string['adele:addinstance'] = 'Add Learning path Instance';
-
-// Capabilities.
-$string['adele:addlearningpath'] = 'Can add learning paths';
-$string['mod/adele:seelearningpath'] = 'Can see learning paths';
-
-// Mform.
-$string['mform_select_learningpath'] = 'Chosen Learning Path';
-$string['mform_select_view'] = 'Choose view';
-$string['mform_select_userlist'] = 'Choose user list option';
-$string['mform_select_participantslist'] = 'Choose an option for how people get subscribed to the learning path';
-
-// Mform options.
-$string['mform_options_view_top_level'] = 'Show Learning path on top level';
-$string['mform_options_view_floor_level'] = 'Show Learning path on floor level';
-$string['mform_options_userlist_all'] = 'Everyone sees overview of all subscribed participants results';
-$string['mform_options_userlist_only'] = 'Everyone sees only their own results';
-$string['mform_options_participantslist_this_course'] = 'Everyone who is subscribed to that course';
-$string['mform_options_participantslist_starting_courses'] = 'Everyone who is subscribed to at least one starting node';
+$string['completionlearningpathfinished'] = 'Learningpath completion';
+$string['completionlearningpathfinished:des'] = 'Activity completion will be triggered if learning path is finished';
 $string['mform_options_create_learningpath'] = 'Create learning path';
 $string['mform_options_link_create_learningpath'] = 'Link to learning path creation';
 $string['mform_options_no_selection'] = 'No selection';
+$string['mform_options_participantslist_starting_courses'] = 'Everyone who is subscribed to at least one starting node';
+$string['mform_options_participantslist_this_course'] = 'Everyone who is subscribed to that course';
 $string['mform_options_required'] = 'required';
+$string['mform_options_userlist_all'] = 'Everyone sees overview of all subscribed participants results';
+$string['mform_options_userlist_only'] = 'Everyone sees only their own results';
+$string['mform_options_view_floor_level'] = 'Show Learning path on floor level';
+$string['mform_options_view_top_level'] = 'Show Learning path on top level';
+$string['mform_select_learningpath'] = 'Chosen Learning Path';
+$string['mform_select_participantslist'] = 'Choose an option for how people get subscribed to the learning path';
+$string['mform_select_userlist'] = 'Choose user list option';
+$string['mform_select_view'] = 'Choose view';
+$string['mod/adele:seelearningpath'] = 'Can see learning paths';
+$string['modulename'] = 'Learning path';
+$string['modulenameplural'] = 'Learning paths';
+$string['pluginadministration'] = 'Learning path Plugin Administration';
+$string['pluginname'] = 'Learning path';

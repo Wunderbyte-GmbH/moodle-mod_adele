@@ -35,7 +35,7 @@ class backup_adele_activity_structure_step extends backup_activity_structure_ste
         // Define each element and its attributes.
         $adele = new backup_nested_element('adele', ['id'], [
             'course', 'name', 'learningpathid', 'view', 'userlist',
-            'participantslist', 'timecreated', 'timemodified', 'intro', 'introformat',
+            'participantslist', 'timecreated', 'timemodified', 'intro', 'introformat', 'completionlearningpathfinished',
         ]);
 
         // Define sources.

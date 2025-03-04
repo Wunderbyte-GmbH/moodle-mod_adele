@@ -25,35 +25,31 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Lernpfad';
-$string['modulenameplural'] = 'Lernpfade';
-$string['modulename'] = 'Lernpfad';
+$string['adele:addinstance'] = 'Lernpfad-Instanz hinzufügen';
+$string['adele:addlearningpath'] = 'Kann Lernpfade hinzufügen';
+$string['adele:readinstance'] = 'Darf Lernpfad-Instanzen sehen';
+$string['adelefieldset'] = 'Lernpfad Einstellungen';
 $string['adelename'] = 'Lernpfad';
 $string['adelename_help'] = 'Hilfe für Lernpfad';
-$string['adelefieldset'] = 'Lernpfad Einstellungen';
 $string['adelesettings'] = 'Lernpfad Einstellungen';
-$string['adele:readinstance'] = 'Darf Lernpfad-Instanzen sehen';
-$string['pluginadministration'] = 'Lernpfad Plugin-Verwaltung';
-$string['adele:addinstance'] = 'Lernpfad-Instanz hinzufügen';
-
-// Capabilities.
-$string['adele:addlearningpath'] = 'Kann Lernpfade hinzufügen';
-$string['mod/adele:seelearningpath'] = 'Kann Lernpfade sehen';
-
-// Mform.
-$string['mform_select_learningpath'] = 'Gewählter Lernpfad';
-$string['mform_select_view'] = 'Ansicht auswählen';
-$string['mform_select_userlist'] = 'Benutzerlistenoption auswählen';
-$string['mform_select_participantslist'] = 'Eine Option auswählen, wie Personen für den Lernpfad abonniert werden';
-
-// Mform options.
-$string['mform_options_view_top_level'] = 'Lernpfad auf oberster Ebene anzeigen';
-$string['mform_options_view_floor_level'] = 'Lernpfad auf unterster Ebene anzeigen';
-$string['mform_options_userlist_all'] = 'Jeder sieht eine Übersicht aller eingeschriebenen Teilnehmerergebnisse';
-$string['mform_options_userlist_only'] = 'Jeder sieht nur seine eigenen Ergebnisse';
-$string['mform_options_participantslist_this_course'] = 'Jeder, der für diesen Kurs eingeschrieben ist';
-$string['mform_options_participantslist_starting_courses'] = 'Jeder ist eingeschrieben, der in einem Startknoten ist';
+$string['completionlearningpathfinished'] = 'Lernpfadabschluss';
+$string['completionlearningpathfinished:des'] = 'Aktivität wird abgeschlossen wenn Lernpfad beendet wird';
 $string['mform_options_create_learningpath'] = 'Erstelle Lernpfad';
 $string['mform_options_link_create_learningpath'] = 'Link zur Erstellung eines Lernpfades';
 $string['mform_options_no_selection'] = 'Keine Auswahl';
+$string['mform_options_participantslist_starting_courses'] = 'Jeder ist eingeschrieben, der in einem Startknoten ist';
+$string['mform_options_participantslist_this_course'] = 'Jeder, der für diesen Kurs eingeschrieben ist';
 $string['mform_options_required'] = 'notwendig';
+$string['mform_options_userlist_all'] = 'Jeder sieht eine Übersicht aller eingeschriebenen Teilnehmerergebnisse';
+$string['mform_options_userlist_only'] = 'Jeder sieht nur seine eigenen Ergebnisse';
+$string['mform_options_view_floor_level'] = 'Lernpfad auf unterster Ebene anzeigen';
+$string['mform_options_view_top_level'] = 'Lernpfad auf oberster Ebene anzeigen';
+$string['mform_select_learningpath'] = 'Gewählter Lernpfad';
+$string['mform_select_participantslist'] = 'Eine Option auswählen, wie Personen für den Lernpfad abonniert werden';
+$string['mform_select_userlist'] = 'Benutzerlistenoption auswählen';
+$string['mform_select_view'] = 'Ansicht auswählen';
+$string['mod/adele:seelearningpath'] = 'Kann Lernpfade sehen';
+$string['modulename'] = 'Lernpfad';
+$string['modulenameplural'] = 'Lernpfade';
+$string['pluginadministration'] = 'Lernpfad Plugin-Verwaltung';
+$string['pluginname'] = 'Lernpfad';
