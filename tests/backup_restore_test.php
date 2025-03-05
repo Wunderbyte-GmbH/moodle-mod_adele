@@ -25,9 +25,6 @@
 namespace mod_adele;
 
 use advanced_testcase;
-use backup;
-use backup_controller;
-use restore_controller;
 
 defined('MOODLE_INTERNAL') || die();
 global $CFG;
@@ -71,7 +68,7 @@ final class backup_restore_test extends advanced_testcase {
         $this->assertNotEmpty($DB->get_record('adele', ['id' => $adele->id]));
 
         // Perform a backup of the course.
-        $bc = new backup_controller(
+        $bc = new \backup_controller(
             \backup::TYPE_1COURSE,
             $course->id,
             \backup::FORMAT_MOODLE,
