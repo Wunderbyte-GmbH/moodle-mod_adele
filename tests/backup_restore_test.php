@@ -28,6 +28,10 @@ use advanced_testcase;
 
 defined('MOODLE_INTERNAL') || die();
 global $CFG;
+require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
+require_once($CFG->dirroot . '/backup/controller/backup_controller.class.php');
+require_once($CFG->dirroot . '/backup/controller/restore_controller.class.php');
+
 
 require_once($CFG->dirroot . '/mod/adele/lib.php');
 
