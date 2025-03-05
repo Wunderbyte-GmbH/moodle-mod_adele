@@ -55,6 +55,9 @@ class restore_adele_activity_structure_step extends restore_activity_structure_s
         $this->apply_activity_instance($newitemid);
     }
 
+    /**
+     * Defines steps for the backup process.
+     */
     protected function after_execute() {
     }
 }

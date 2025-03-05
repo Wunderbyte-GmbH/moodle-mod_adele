@@ -33,20 +33,6 @@ function xmldb_adele_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
     if ($oldversion < 2024022100) {
-
-        // Changing type of field participantslist on table adele to char.
-        $table = new xmldb_table('adele');
-        $field = new xmldb_field('participantslist', XMLDB_TYPE_CHAR, '256', null, XMLDB_NOTNULL, null, '0', 'userlist');
-
-        // Launch change of type for field participantslist.
-        $dbman->change_field_type($table, $field);
-
-        // Adele savepoint reached.
-        upgrade_mod_savepoint(true, 2024022100, 'adele');
-    }
-
-    if ($oldversion < 2024022100) {
-
         // Changing type of field participantslist on table adele to char.
         $table = new xmldb_table('adele');
         $field = new xmldb_field('participantslist', XMLDB_TYPE_CHAR, '256', null, XMLDB_NOTNULL, null, '0', 'userlist');

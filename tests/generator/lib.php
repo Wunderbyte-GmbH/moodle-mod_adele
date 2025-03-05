@@ -15,15 +15,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Class local_adele_generator for generation of dummy data
+ * Class mod_adele for generation of dummy data
  *
- * @package local_adele
+ * @package mod_adele
  * @category test
  * @copyright 2023 Andrii Semenets
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_adele_generator extends testing_module_generator {
-
     /**
      * Create booking instance
      *

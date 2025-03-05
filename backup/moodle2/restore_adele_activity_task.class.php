@@ -48,10 +48,10 @@ class restore_adele_activity_task extends restore_activity_task {
      * Defines steps for the restore process.
      */
     public function get_fileareas() {
-        return null; // Keine Dateien.
+        return null;
     }
 
-        /**
+    /**
      * Define the contents in the activity that must be
      * processed by the link decoder
      */

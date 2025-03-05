@@ -22,6 +22,10 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace mod_adele;
+
+use advanced_testcase;
+
 defined('MOODLE_INTERNAL') || die();
 global $CFG;
 
@@ -34,11 +38,12 @@ require_once($CFG->dirroot . '/mod/adele/lib.php');
 /**
  * Unit test for backup and restore functionality of mod_adele.
  */
-class backup_restore_test extends advanced_testcase {
+final class backup_restore_test extends advanced_testcase {
     /**
      * Sets up the test environment.
      */
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
     }
 
@@ -47,7 +52,7 @@ class backup_restore_test extends advanced_testcase {
      *
      * @covers \mod_adele\backup_restore
      */
-    public function test_backup_and_restore() {
+    public function test_backup_and_restore(): void {
         global $DB, $USER;
 
         // Create a course and an instance of the Adele module.
@@ -72,7 +77,8 @@ class backup_restore_test extends advanced_testcase {
             $course->id,
             \backup::FORMAT_MOODLE,
             \backup::INTERACTIVE_NO,
-            \backup::MODE_GENERAL
+            \backup::MODE_GENERAL,
+            $USER->id
         );
         $bc->execute_plan();
         $backupid = $bc->get_backupid();

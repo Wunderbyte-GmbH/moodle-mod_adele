@@ -44,8 +44,11 @@ class backup_adele_activity_task extends backup_activity_task {
         $this->add_step(new backup_adele_activity_structure_step('adele_structure', 'adele.xml'));
     }
 
+    /**
+     * Defines steps for the backup process.
+     */
     public function get_fileareas() {
-        return []; // Keine Dateien.
+        return [];
     }
 
    /**
