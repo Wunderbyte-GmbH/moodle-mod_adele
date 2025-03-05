@@ -51,13 +51,12 @@ class backup_adele_activity_task extends backup_activity_task {
         return [];
     }
 
-   /**
-    * Encodes URLs to the activity instance for Moodle backup.
-    *
-    * @param string $content HTML content containing URLs to the activity instance.
-    * @return string Encoded content with URLs converted.
-    */
+    /**
+     * Encodes URLs to the activity instance for Moodle backup.
+     * @param string $content HTML content containing URLs to the activity instance.
+     * @return string Encoded content with URLs converted.
+     */
     public static function encode_content_links($content) {
-        return $content; // Keine Links zu encodieren.
+        return $content;
     }
 }
