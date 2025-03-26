@@ -33,9 +33,6 @@ class mod_adele_generator extends testing_module_generator {
      *
      */
     public function create_instance($record = null, ?array $options = null) {
-
-        $record['participantslist'] = [];
-
         return parent::create_instance($record, $options);
     }
 }
