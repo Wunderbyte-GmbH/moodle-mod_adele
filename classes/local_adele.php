@@ -38,7 +38,6 @@ class local_adele {
      * Entities constructor.
      */
     public function __construct() {
-
     }
 
     /**
@@ -56,11 +55,11 @@ class local_adele {
           'msg' => '',
         ];
         $learningpathlocal = $DB->get_record(
-          'local_adele_learning_paths',
-          [
+            'local_adele_learning_paths',
+            [
             'id' => $learningpathid,
-          ],
-          'json'
+            ],
+            'json'
         );
         if ($learningpathlocal) {
             $learningpathlocal->json = json_decode($learningpathlocal->json);
@@ -121,7 +120,7 @@ class local_adele {
                         ['id' => $module->instance],
                         'catscaleid'
                     );
-                    if (empty($adaptivetest) ||$adaptivetest->catscaleid != $internalcatquizid) {
+                    if (empty($adaptivetest) || $adaptivetest->catscaleid != $internalcatquizid) {
                         $alisecompatible = [
                           'alisecompatible' => false,
                           'msg' => 'Mismatch between adaptive quiz inside the course and the one

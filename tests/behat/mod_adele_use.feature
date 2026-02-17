@@ -47,4 +47,3 @@ Feature: As an admin I create adele activity and view it as a student.
     And I should see "Course 3" in the ".vue-flow__pane.vue-flow__container.draggable" "css_element"
     And I should see "Hide  User List"
     ##And I wait "31" seconds
-    

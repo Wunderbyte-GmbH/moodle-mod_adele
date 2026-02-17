@@ -119,25 +119,26 @@ function adele_delete_instance($id) {
 function mod_adele_cm_info_view(cm_info $cm) {
     global $DB, $PAGE, $USER, $OUTPUT, $CFG;
     $learningpathmod = $DB->get_record(
-      'adele',
-      [
+        'adele',
+        [
         'id' => $cm->instance,
         'course' => $cm->course,
-      ],
-      'id, learningpathid, view, userlist'
+        ],
+        'id, learningpathid, view, userlist'
     );
     if (
           isloggedin() &&
           !isguestuser() &&
           $learningpathmod->view == 1 &&
           $learningpathmod->learningpathid
-        ) {
+    ) {
         $alisecompatible = local_adele::get_internalquuiz_id($learningpathmod->learningpathid, $PAGE->course->id);
         $modulecontext = context_module::instance($cm->id);
         if (has_capability('mod/adele:addinstance', $modulecontext)) {
             if ($alisecompatible['alisecompatible']) {
-                $html = $OUTPUT->render_from_template('local_adele/initview',
-                  [
+                $html = $OUTPUT->render_from_template(
+                    'local_adele/initview',
+                    [
                     'userid' => $USER->id,
                     'contextid' => $modulecontext->id,
                     'quizsetting' => get_config('local_adele', 'quizsettings'),
@@ -146,7 +147,8 @@ function mod_adele_cm_info_view(cm_info $cm) {
                     'view' => "teacher",
                     'wwwroot' => $CFG->wwwroot,
                     'version' => $CFG->version,
-                ]);
+                    ]
+                );
             } else {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
                     padding: 15px; margin-bottom: 20px; color: #721c24;">
@@ -157,8 +159,9 @@ function mod_adele_cm_info_view(cm_info $cm) {
             $cm->set_content($html);
         } else if (has_capability('mod/adele:readinstance', $modulecontext)) {
             if ($alisecompatible['alisecompatible']) {
-                $html = $OUTPUT->render_from_template('local_adele/initview',
-                  [
+                $html = $OUTPUT->render_from_template(
+                    'local_adele/initview',
+                    [
                     'userid' => $USER->id,
                     'contextid' => $modulecontext->id,
                     'quizsetting' => get_config('local_adele', 'quizsettings'),
@@ -167,7 +170,8 @@ function mod_adele_cm_info_view(cm_info $cm) {
                     'view' => "student",
                     'wwwroot' => $CFG->wwwroot,
                     'version' => $CFG->version,
-                ]);
+                    ]
+                );
             } else {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
                     padding: 15px; margin-bottom: 20px; color: #721c24;">
