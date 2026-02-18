@@ -40,7 +40,7 @@ Feature: As an admin I create adele activity and view it as a student.
     And I set the field "Chosen Learning Path" to "Learning path 2025"
     And I set the field "Choose an option for how people get subscribed to the learning path" to "Everyone who is subscribed to that course"
     And I press "Save and return to course"
-    Then I should see "Test LP Activity" in the "New section" "section"
+    Then I should see "Test LP Activity" in the "General" "section"
     And I should see "Learning Path 2025"
     And I should see "Course 1" in the ".vue-flow__pane.vue-flow__container.draggable" "css_element"
     And I should see "Course 2" in the ".vue-flow__pane.vue-flow__container.draggable" "css_element"
