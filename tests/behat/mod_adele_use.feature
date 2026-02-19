@@ -40,10 +40,26 @@ Feature: As an admin I create adele activity and view it as a student.
     And I set the field "Chosen Learning Path" to "Learning path 2025"
     And I set the field "Choose an option for how people get subscribed to the learning path" to "Everyone who is subscribed to that course"
     And I press "Save and return to course"
+    ## Validate LP and visibility of its components
     Then I should see "Test LP Activity" in the "General" "section"
     And I should see "Learning Path 2025"
     And I should see "Course 1" in the ".vue-flow__pane.vue-flow__container.draggable" "css_element"
     And I should see "Course 2" in the ".vue-flow__pane.vue-flow__container.draggable" "css_element"
     And I should see "Course 3" in the ".vue-flow__pane.vue-flow__container.draggable" "css_element"
     And I should see "Hide  User List"
-    ##And I wait "31" seconds
+    ## Validate list of course participants
+    And the following should exist in the "adele-userlist-table" table:
+      | Firstname | Lastname | Progress    | Finished Nodes | Ranking |
+      | Student   | 1        | No Progress | 0              | 1       |
+      | Student   | 2        | No Progress | 0              | 1       |
+      | Teacher   | Test     | No Progress | 0              | 1       |
+    ## Validate student 1 accessibility of courses
+    And I click on "Student 1" "link" in the "#adele-userlist-row-r1" "css_element"
+    And I should see "User path for:" in the "#local-adele-app" "css_element"
+    And I should see "student1" in the "#local-adele-app h5" "css_element"
+    And "[data-id=\"dndnode_2\"] .fa-lock" "css_element" should exist
+    And "[data-id=\"dndnode_3\"] .fa-lock" "css_element" should exist
+    And I wait "1" seconds
+    And I click on "Go to course" "button" in the "[data-id=\"dndnode_1\"]" "css_element"
+    And I switch to a second window
+    And I should see "Course 1" in the ".page-context-header h1" "css_element"
