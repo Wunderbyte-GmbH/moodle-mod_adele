@@ -58,7 +58,7 @@ class mod_adele_mod_form extends moodleform_mod {
 
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
-        $mform->addHelpButton('name', 'adelename', 'mod_adele');
+        // $mform->addHelpButton('name', 'adelename', 'mod_adele');
 
         // Adding the standard "intro" and "introformat" fields.
         if ($CFG->branch >= 29) {
@@ -83,7 +83,6 @@ class mod_adele_mod_form extends moodleform_mod {
         $records = learning_paths::get_editable_learning_paths();
 
         $select = [];
-        $select[0] = get_string('noselection', 'form');
         foreach ($records as $record) {
             $select[$record->id] = $record->name;
         }
@@ -104,32 +103,35 @@ class mod_adele_mod_form extends moodleform_mod {
         $mform->setDefault('learningpathid', 0);
 
         $mform->addRule('learningpathid', get_string('mform_options_required', 'mod_adele'), 'required', null, 'client');
+        $mform->addHelpButton('learningpathid', 'mform_select_learningpath', 'mod_adele');
 
         $views = [
-          1 => get_string('mform_options_view_top_level', 'mod_adele'),
           2 => get_string('mform_options_view_floor_level', 'mod_adele'),
+          1 => get_string('mform_options_view_top_level', 'mod_adele'),
         ];
         $mform->addElement('select', 'view', get_string('mform_select_view', 'mod_adele'), $views);
 
         $userlist = [
-          1 => get_string('mform_options_userlist_all', 'mod_adele'),
           2 => get_string('mform_options_userlist_only', 'mod_adele'),
+          1 => get_string('mform_options_userlist_all', 'mod_adele'),
         ];
         $mform->addElement('select', 'userlist', get_string('mform_select_userlist', 'mod_adele'), $userlist);
 
         $participantslist = [
           1 => get_string('mform_options_participantslist_this_course', 'mod_adele'),
           2 => get_string('mform_options_participantslist_starting_courses', 'mod_adele'),
+          3 => get_string('mform_options_participantslist_all_courses', 'mod_adele'),
         ];
         $mform->addElement(
-            'autocomplete',
+            'select',
             'participantslist',
             get_string('mform_select_participantslist', 'mod_adele'),
             $participantslist,
-            ['multiple' => true]
+            ['multiple' => true, 'size' => 3]
         );
 
         $mform->addRule('participantslist', get_string('mform_options_required', 'mod_adele'), 'required', null, 'client');
+        $mform->addHelpButton('participantslist', 'mform_select_participantslist', 'mod_adele');
 
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
