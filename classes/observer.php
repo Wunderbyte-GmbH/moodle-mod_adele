@@ -30,7 +30,6 @@ use local_adele\learning_paths;
  * Event observer for local_adele.
  */
 class mod_adele_observer {
-
     /**
      * Observer for changes inside the module.
      * We check if the module is a adele mod.
@@ -95,7 +94,7 @@ class mod_adele_observer {
      * @param base $data
      * @param bool $update
      */
-    public static function enroll_all_participants($adelelp, $data, $update=false) {
+    public static function enroll_all_participants($adelelp, $data, $update = false) {
         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
         $coursecontext = context_course::instance($data->courseid);
         $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id, u.username, u.firstname, u.lastname, u.email');
