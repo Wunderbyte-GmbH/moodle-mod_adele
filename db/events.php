@@ -15,17 +15,17 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin capabilities are defined here.
+ * Event observers for mod_adele.
  *
  * @package     mod_adele
  * @author      Jacob Viertel
- * @copyright  2024 Wunderbyte GmbH
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright   2026 Wunderbyte GmbH
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
- defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die();
 
- $observers = [
+$observers = [
     [
         'eventname' => '\core\event\course_module_created',
         'callback' => 'mod_adele_observer::saved_module',
@@ -38,4 +38,4 @@
         'eventname' => '\core\event\user_enrolment_created',
         'callback' => 'mod_adele_observer::user_enrolment_created',
     ],
- ];
+];
