@@ -265,10 +265,10 @@ final class observer_enrolment_test extends advanced_testcase {
         $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id');
 
         // Assert: User1 and User2 are enrolled, User3 is not.
-        $enrolleduserids = array_keys($enrolledusers);
-        $this->assertContains($user1->id, $enrolleduserids);
-        $this->assertContains($user2->id, $enrolleduserids);
-        $this->assertNotContains($user3->id, $enrolleduserids);
+        $enrolleduserids = array_map('intval', array_keys($enrolledusers));
+        $this->assertContains((int)$user1->id, $enrolleduserids);
+        $this->assertContains((int)$user2->id, $enrolleduserids);
+        $this->assertNotContains((int)$user3->id, $enrolleduserids);
     }
 
     /**
@@ -498,11 +498,11 @@ final class observer_enrolment_test extends advanced_testcase {
         // Act.
         $coursecontext = context_course::instance($course->id);
         $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id');
-        $enrolleduserids = array_keys($enrolledusers);
+        $enrolleduserids = array_map('intval', array_keys($enrolledusers));
 
         // Assert: All 5 users are enrolled.
         foreach ($users as $user) {
-            $this->assertContains($user->id, $enrolleduserids);
+            $this->assertContains((int)$user->id, $enrolleduserids);
         }
     }
 
