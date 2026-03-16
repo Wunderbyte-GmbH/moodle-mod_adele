@@ -15,24 +15,43 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Class mod_adele for generation of dummy data
+ * Data generator for mod_adele.
  *
- * @package mod_adele
- * @category test
- * @copyright 2023 Andrii Semenets
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    mod_adele
+ * @category   test
+ * @copyright  2026 Andrii Semenets
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/**
+ * Class mod_adele_generator for generation of dummy data.
+ *
+ * @package    mod_adele
+ * @category   test
+ * @copyright  2026 Andrii Semenets
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_adele_generator extends testing_module_generator {
     /**
-     * Create booking instance
+     * Create a new instance of the adele activity module.
      *
-     * @param mixed|null $record
-     * @param array|null $options
+     * Sets default values for required fields that may not be provided
+     * by the calling test.
      *
-     * @return stdClass
-     *
+     * @param array|stdClass|null $record Data for the module instance.
+     * @param array|null $options General options for course module.
+     * @return stdClass The created module instance record.
      */
     public function create_instance($record = null, ?array $options = null) {
+        $record = (array)($record ?? []);
+
+        $record += [
+            'learningpathid' => 0,
+            'view' => 1,
+            'userlist' => 0,
+            'participantslist' => '0',
+        ];
+
         return parent::create_instance($record, $options);
     }
 }

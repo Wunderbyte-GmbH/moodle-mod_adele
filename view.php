@@ -18,14 +18,14 @@
  * Prints an instance of mod_adele.
  *
  * @package     mod_adele
- * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
+ * @copyright   2026 Wunderbyte GmbH <info@wunderbyte.at>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 use mod_adele\local_adele;
 
-require(__DIR__.'/../../config.php');
-require_once(__DIR__.'/lib.php');
+require(__DIR__ . '/../../config.php');
+require_once(__DIR__ . '/lib.php');
 
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
@@ -60,37 +60,39 @@ $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 $learningpath = $DB->get_record(
-  'adele',
-  [
-    'id' => $cm->instance,
-    'course' => $cm->course,
-  ],
-  'id, learningpathid, view, userlist'
+    'adele',
+    [
+        'id' => $cm->instance,
+        'course' => $cm->course,
+    ],
+    'id, learningpathid, view, userlist'
 );
 
 echo $OUTPUT->header();
 
 // Early bail out conditions.
 if (
-  isloggedin() &&
-  !isguestuser() &&
-  $learningpath->view >= 1 &&
-  $learningpath->learningpathid
+    isloggedin() &&
+    !isguestuser() &&
+    $learningpath->view >= 1 &&
+    $learningpath->learningpathid
 ) {
     $alisecompatible = local_adele::get_internalquuiz_id($learningpath->learningpathid, $PAGE->course->id);
     if (has_capability('mod/adele:addinstance', $modulecontext)) {
         if ($alisecompatible['alisecompatible']) {
-            echo $OUTPUT->render_from_template('local_adele/initview',
-            [
-              'userid' => $USER->id,
-              'contextid' => $modulecontext->id,
-              'quizsetting' => get_config('local_adele', 'quizsettings'),
-              'learningpath' => $learningpath->learningpathid,
-              'userlist' => $learningpath->userlist,
-              'view' => "teacher",
-              'wwwroot' => $CFG->wwwroot,
-              'version' => $CFG->version,
-            ]);
+            echo $OUTPUT->render_from_template(
+                'local_adele/initview',
+                [
+                    'userid' => $USER->id,
+                    'contextid' => $modulecontext->id,
+                    'quizsetting' => get_config('local_adele', 'quizsettings'),
+                    'learningpath' => $learningpath->learningpathid,
+                    'userlist' => $learningpath->userlist,
+                    'view' => "teacher",
+                    'wwwroot' => $CFG->wwwroot,
+                    'version' => $CFG->version,
+                ]
+            );
         } else {
             echo <<<EOT
                 <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
@@ -102,17 +104,19 @@ if (
         }
     } else if (has_capability('mod/adele:readinstance', $modulecontext)) {
         if ($alisecompatible['alisecompatible']) {
-            echo $OUTPUT->render_from_template('local_adele/initview',
-            [
-              'userid' => $USER->id,
-              'contextid' => $modulecontext->id,
-              'quizsetting' => get_config('local_adele', 'quizsettings'),
-              'learningpath' => $learningpath->learningpathid,
-              'userlist' => $learningpath->userlist,
-              'view' => "student",
-              'wwwroot' => $CFG->wwwroot,
-              'version' => $CFG->version,
-            ]);
+            echo $OUTPUT->render_from_template(
+                'local_adele/initview',
+                [
+                    'userid' => $USER->id,
+                    'contextid' => $modulecontext->id,
+                    'quizsetting' => get_config('local_adele', 'quizsettings'),
+                    'learningpath' => $learningpath->learningpathid,
+                    'userlist' => $learningpath->userlist,
+                    'view' => "student",
+                    'wwwroot' => $CFG->wwwroot,
+                    'version' => $CFG->version,
+                ]
+            );
         } else {
             echo <<<EOT
                 <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;

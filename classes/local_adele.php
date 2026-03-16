@@ -19,26 +19,25 @@
  *
  * @package     mod_adele
  * @author      Jacob Viertel
- * @copyright  2024 Wunderbyte GmbH
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright   2026 Wunderbyte GmbH
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_adele;
 
 /**
- * Class learning_paths
+ * Class local_adele
  *
  * @package     mod_adele
  * @author      Jacob Viertel
- * @copyright  2024 Wunderbyte GmbH
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright   2026 Wunderbyte GmbH
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class local_adele {
     /**
      * Entities constructor.
      */
     public function __construct() {
-
     }
 
     /**
@@ -52,15 +51,15 @@ class local_adele {
         global $DB;
         $internalcatquizid = null;
         $alisecompatible = [
-          'alisecompatible' => true,
-          'msg' => '',
+            'alisecompatible' => true,
+            'msg' => '',
         ];
         $learningpathlocal = $DB->get_record(
-          'local_adele_learning_paths',
-          [
-            'id' => $learningpathid,
-          ],
-          'json'
+            'local_adele_learning_paths',
+            [
+                'id' => $learningpathid,
+            ],
+            'json'
         );
         if ($learningpathlocal) {
             $learningpathlocal->json = json_decode($learningpathlocal->json);
@@ -108,8 +107,8 @@ class local_adele {
     public static function get_alise_compability($internalcatquizid, $courseid) {
         global $DB;
         $alisecompatible = [
-          'alisecompatible' => true,
-          'msg' => '',
+            'alisecompatible' => true,
+            'msg' => '',
         ];
         if ($internalcatquizid) {
             $alisecount = 0;
@@ -121,11 +120,11 @@ class local_adele {
                         ['id' => $module->instance],
                         'catscaleid'
                     );
-                    if (empty($adaptivetest) ||$adaptivetest->catscaleid != $internalcatquizid) {
+                    if (empty($adaptivetest) || $adaptivetest->catscaleid != $internalcatquizid) {
                         $alisecompatible = [
-                          'alisecompatible' => false,
-                          'msg' => 'Mismatch between adaptive quiz inside the course and the one
-                          that is reffered inside the learning path.',
+                            'alisecompatible' => false,
+                            'msg' => 'Mismatch between adaptive quiz inside the course and the one
+                            that is reffered inside the learning path.',
                         ];
                     }
                     $alisecount++;
@@ -133,8 +132,8 @@ class local_adele {
             }
             if ($alisecount > 1 && $alisecompatible) {
                 $alisecompatible = [
-                  'alisecompatible' => false,
-                  'msg' => 'Found more than one adaptive quiz inside course. Only one is allowed if learning path should be used.',
+                    'alisecompatible' => false,
+                    'msg' => 'Found more than one adaptive quiz inside course. Only one is allowed if learning path should be used.',
                 ];
             }
         }

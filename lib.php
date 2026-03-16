@@ -18,7 +18,7 @@
  * Library of interface functions and constants.
  *
  * @package     mod_adele
- * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
+ * @copyright   2026 Wunderbyte GmbH <info@wunderbyte.at>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -28,7 +28,7 @@ use mod_adele\local_adele;
  * Return if the plugin supports $feature.
  *
  * @param string $feature Constant representing the feature.
- * @return true | null True if the feature is supported, null otherwise.
+ * @return true|null True if the feature is supported, null otherwise.
  */
 function adele_supports($feature) {
     switch ($feature) {
@@ -58,7 +58,9 @@ function adele_add_instance($moduleinstance, $mform = null) {
 
     $moduleinstance->timecreated = time();
 
-    $moduleinstance->participantslist = implode(',', $moduleinstance->participantslist);
+    if (is_array($moduleinstance->participantslist)) {
+        $moduleinstance->participantslist = implode(',', $moduleinstance->participantslist);
+    }
 
     $moduleinstance->completionlearningpathfinished =
         isset($moduleinstance->completionlearningpathfinished) ? $moduleinstance->completionlearningpathfinished : 0;
@@ -84,7 +86,9 @@ function adele_update_instance($moduleinstance, $mform = null) {
     $moduleinstance->timemodified = time();
     $moduleinstance->id = $moduleinstance->instance;
 
-    $moduleinstance->participantslist = implode(',', $moduleinstance->participantslist);
+    if (is_array($moduleinstance->participantslist)) {
+        $moduleinstance->participantslist = implode(',', $moduleinstance->participantslist);
+    }
 
     $moduleinstance->completionlearningpathfinished =
         isset($moduleinstance->completionlearningpathfinished) ? $moduleinstance->completionlearningpathfinished : 0;
@@ -119,34 +123,36 @@ function adele_delete_instance($id) {
 function mod_adele_cm_info_view(cm_info $cm) {
     global $DB, $PAGE, $USER, $OUTPUT, $CFG;
     $learningpathmod = $DB->get_record(
-      'adele',
-      [
-        'id' => $cm->instance,
-        'course' => $cm->course,
-      ],
-      'id, learningpathid, view, userlist'
+        'adele',
+        [
+            'id' => $cm->instance,
+            'course' => $cm->course,
+        ],
+        'id, learningpathid, view, userlist'
     );
     if (
-          isloggedin() &&
-          !isguestuser() &&
-          $learningpathmod->view == 1 &&
-          $learningpathmod->learningpathid
-        ) {
+        isloggedin() &&
+        !isguestuser() &&
+        $learningpathmod->view == 1 &&
+        $learningpathmod->learningpathid
+    ) {
         $alisecompatible = local_adele::get_internalquuiz_id($learningpathmod->learningpathid, $PAGE->course->id);
         $modulecontext = context_module::instance($cm->id);
         if (has_capability('mod/adele:addinstance', $modulecontext)) {
             if ($alisecompatible['alisecompatible']) {
-                $html = $OUTPUT->render_from_template('local_adele/initview',
-                  [
-                    'userid' => $USER->id,
-                    'contextid' => $modulecontext->id,
-                    'quizsetting' => get_config('local_adele', 'quizsettings'),
-                    'learningpath' => $learningpathmod->learningpathid,
-                    'userlist' => $learningpathmod->userlist,
-                    'view' => "teacher",
-                    'wwwroot' => $CFG->wwwroot,
-                    'version' => $CFG->version,
-                ]);
+                $html = $OUTPUT->render_from_template(
+                    'local_adele/initview',
+                    [
+                        'userid' => $USER->id,
+                        'contextid' => $modulecontext->id,
+                        'quizsetting' => get_config('local_adele', 'quizsettings'),
+                        'learningpath' => $learningpathmod->learningpathid,
+                        'userlist' => $learningpathmod->userlist,
+                        'view' => "teacher",
+                        'wwwroot' => $CFG->wwwroot,
+                        'version' => $CFG->version,
+                    ]
+                );
             } else {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
                     padding: 15px; margin-bottom: 20px; color: #721c24;">
@@ -157,17 +163,19 @@ function mod_adele_cm_info_view(cm_info $cm) {
             $cm->set_content($html);
         } else if (has_capability('mod/adele:readinstance', $modulecontext)) {
             if ($alisecompatible['alisecompatible']) {
-                $html = $OUTPUT->render_from_template('local_adele/initview',
-                  [
-                    'userid' => $USER->id,
-                    'contextid' => $modulecontext->id,
-                    'quizsetting' => get_config('local_adele', 'quizsettings'),
-                    'learningpath' => $learningpathmod->learningpathid,
-                    'userlist' => $learningpathmod->userlist,
-                    'view' => "student",
-                    'wwwroot' => $CFG->wwwroot,
-                    'version' => $CFG->version,
-                ]);
+                $html = $OUTPUT->render_from_template(
+                    'local_adele/initview',
+                    [
+                        'userid' => $USER->id,
+                        'contextid' => $modulecontext->id,
+                        'quizsetting' => get_config('local_adele', 'quizsettings'),
+                        'learningpath' => $learningpathmod->learningpathid,
+                        'userlist' => $learningpathmod->userlist,
+                        'view' => "student",
+                        'wwwroot' => $CFG->wwwroot,
+                        'version' => $CFG->version,
+                    ]
+                );
             } else {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
                     padding: 15px; margin-bottom: 20px; color: #721c24;">
@@ -182,8 +190,9 @@ function mod_adele_cm_info_view(cm_info $cm) {
 
 /**
  * This callback is used by the core to add any "extra" information to the activity. For example, completion info.
- * @param stdClass $coursemodule
- * @return false|cached_cm_info
+ *
+ * @param stdClass $coursemodule The course module object.
+ * @return false|cached_cm_info The cached course module info or false.
  */
 function adele_get_coursemodule_info(stdClass $coursemodule) {
     global $DB;

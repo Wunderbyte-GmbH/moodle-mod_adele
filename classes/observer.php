@@ -17,9 +17,9 @@
 /**
  * Event observers.
  *
- * @package mod_adele
- * @copyright 2024 Georg Maißer <info@wunderbyte.at>
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   mod_adele
+ * @copyright 2026 Wunderbyte GmbH <info@wunderbyte.at>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 use core\event\base;
@@ -27,17 +27,20 @@ use local_adele\enrollment;
 use local_adele\learning_paths;
 
 /**
- * Event observer for local_adele.
+ * Event observer for mod_adele.
+ *
+ * @package   mod_adele
+ * @copyright 2026 Wunderbyte GmbH <info@wunderbyte.at>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_adele_observer {
-
     /**
      * Observer for changes inside the module.
      * We check if the module is a adele mod.
      * We check if something was changed, if possible.
      * We enroll the users that meet the criteria into the course.
      *
-     * @param base $data
+     * @param base $data The event data.
      * @return base
      */
     public static function saved_module($data) {
@@ -66,7 +69,7 @@ class mod_adele_observer {
      * Observer for changes inside the module.
      * We enrol the user to the learningpath.
      *
-     * @param base $data
+     * @param base $data The event data.
      * @return base
      */
     public static function user_enrolment_created($data) {
@@ -93,11 +96,11 @@ class mod_adele_observer {
     /**
      * Enroll all participants inside the course.
      *
-     * @param object $adelelp
-     * @param base $data
-     * @param bool $update
+     * @param object $adelelp The adele learning path record.
+     * @param base $data The event data.
+     * @param bool $update Whether this is an update.
      */
-    public static function enroll_all_participants($adelelp, $data, $update=false) {
+    public static function enroll_all_participants($adelelp, $data, $update = false) {
         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
         $coursecontext = context_course::instance($data->courseid);
         $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id, u.username, u.firstname, u.lastname, u.email');
@@ -112,9 +115,9 @@ class mod_adele_observer {
     /**
      * Enroll all participants inside the starting nodes.
      *
-     * @param object $adelelp
-     * @param base $data
-     * @param bool $update
+     * @param object $adelelp The adele learning path record.
+     * @param base $data The event data.
+     * @param bool $update Whether this is an update.
      */
     public static function enroll_starting_nodes_participants($adelelp, $data, $update = false) {
         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
@@ -139,9 +142,9 @@ class mod_adele_observer {
     /**
      * Enroll all participants inside any nodes of learning path.
      *
-     * @param object $adelelp
-     * @param base $data
-     * @param bool $update
+     * @param object $adelelp The adele learning path record.
+     * @param base $data The event data.
+     * @param bool $update Whether this is an update.
      */
     public static function enroll_any_nodes_participants($adelelp, $data, $update = false) {
         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
@@ -160,12 +163,12 @@ class mod_adele_observer {
             }
         }
     }
-    
+
     /**
      * Enroll all participants in a given course.
      *
-     * @param base $data
-     * @param object $user
+     * @param base $data The event data.
+     * @param object $user The user object.
      */
     public static function subscribe_user_course($data, $user) {
         global $DB;

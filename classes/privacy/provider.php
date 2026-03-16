@@ -15,34 +15,30 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * GDPR Provider
- *
+ * GDPR Provider.
  *
  * @package    mod_adele
- * @copyright  2024 Wunderbyte GmbH
+ * @copyright  2026 Wunderbyte GmbH
  * @author     Ralf Erlebach
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- **/
+ */
 
 namespace mod_adele\privacy;
 
 /**
  * Class provider
  *
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
  * @package    mod_adele
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- **/
+ * @copyright  2026 Wunderbyte GmbH
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class provider implements \core_privacy\local\metadata\null_provider {
-
     /**
      * Get the language string identifier with the component's language file to explain why this plugin stores no data.
      *
-     * @return  string
+     * @return string
      */
     public static function get_reason(): string {
         return 'privacy:null_reason';
     }
-
 }

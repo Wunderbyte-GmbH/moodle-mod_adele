@@ -15,11 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This file contains the backup activity for the assign module
+ * Unit test for backup and restore functionality of mod_adele.
  *
- * @package mod_adele
- * @copyright 2024 Wunderbyte GmbH
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    mod_adele
+ * @copyright  2026 Wunderbyte GmbH
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_adele;
@@ -27,6 +27,7 @@ namespace mod_adele;
 use advanced_testcase;
 
 defined('MOODLE_INTERNAL') || die();
+
 global $CFG;
 
 require_once($CFG->dirroot . '/mod/adele/lib.php');
@@ -36,6 +37,10 @@ require_once($CFG->dirroot . '/backup/controller/restore_controller.class.php');
 
 /**
  * Unit test for backup and restore functionality of mod_adele.
+ *
+ * @package    mod_adele
+ * @copyright  2026 Wunderbyte GmbH
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class backup_restore_test extends advanced_testcase {
     /**
@@ -49,6 +54,7 @@ final class backup_restore_test extends advanced_testcase {
 
     /**
      * Tests backup and restore of the adele activity module.
+     *
      * @covers \mod_adele\backup_restore
      */
     public function test_backup_and_restore(): void {
