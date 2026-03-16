@@ -77,7 +77,7 @@ if (
     $learningpath->view >= 1 &&
     $learningpath->learningpathid
 ) {
-    $alisecompatible = local_adele::get_internalquuiz_id($learningpath->learningpathid, $PAGE->course->id);
+    $alisecompatible = local_adele::get_internalquiz_id($learningpath->learningpathid, $PAGE->course->id);
     if (has_capability('mod/adele:addinstance', $modulecontext)) {
         if ($alisecompatible['alisecompatible']) {
             echo $OUTPUT->render_from_template(

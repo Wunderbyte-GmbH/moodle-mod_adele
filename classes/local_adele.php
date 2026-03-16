@@ -47,7 +47,7 @@ class local_adele {
      * @param string $courseid       The ID of the course.
      * @return array
      */
-    public static function get_internalquuiz_id($learningpathid, $courseid) {
+    public static function get_internalquiz_id($learningpathid, $courseid) {
         global $DB;
         $internalcatquizid = null;
         $alisecompatible = [
@@ -133,7 +133,8 @@ class local_adele {
             if ($alisecount > 1 && $alisecompatible) {
                 $alisecompatible = [
                     'alisecompatible' => false,
-                    'msg' => 'Found more than one adaptive quiz inside course. Only one is allowed if learning path should be used.',
+                    'msg' => 'Found more than one adaptive quiz inside course.
+                        Only one is allowed if learning path should be used.',
                 ];
             }
         }
