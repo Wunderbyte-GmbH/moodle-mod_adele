@@ -23,8 +23,6 @@
  */
 
 use core\event\base;
-use local_adele\enrollment;
-use local_adele\learning_paths;
 
 /**
  * Event observer for mod_adele.
@@ -34,6 +32,16 @@ use local_adele\learning_paths;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_adele_observer {
+    /**
+     * Check if the local_adele plugin is available.
+     *
+     * @return bool True if local_adele classes are available.
+     */
+    private static function is_local_adele_available(): bool {
+        return class_exists('local_adele\learning_paths')
+            && class_exists('local_adele\enrollment');
+    }
+
     /**
      * Observer for changes inside the module.
      * We check if the module is a adele mod.
@@ -46,11 +54,17 @@ class mod_adele_observer {
     public static function saved_module($data) {
         global $DB;
         if ($data->other['modulename'] == 'adele') {
+            if (!self::is_local_adele_available()) {
+                return $data;
+            }
             $adelelp = $DB->get_record(
                 'adele',
                 ['id' => $data->other['instanceid']],
                 'learningpathid, participantslist'
             );
+            if (!$adelelp) {
+                return $data;
+            }
             $adelelp->participantslist = explode(',', $adelelp->participantslist);
             foreach ($adelelp->participantslist as $participantslist) {
                 if ($participantslist == '1') {
@@ -74,7 +88,13 @@ class mod_adele_observer {
      */
     public static function user_enrolment_created($data) {
         global $DB;
+        if (!self::is_local_adele_available()) {
+            return $data;
+        }
         $modules = get_course_mods($data->courseid);
+        if (!$modules) {
+            return $data;
+        }
         foreach ($modules as $module) {
             if ($module->modname == 'adele' && $module->deletioninprogress == 0) {
                 $adelelp = $DB->get_record(
@@ -84,8 +104,9 @@ class mod_adele_observer {
                 );
                 if (isset($adelelp->participantslist) && $adelelp->participantslist == '1') {
                     // Subscribe user to learning path.
-                    $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
-                    $coursecontext = context_course::instance($data->courseid);
+                    $learningpath = \local_adele\learning_paths::get_learning_path_by_id(
+                        $adelelp->learningpathid
+                    );
                     enrollment::subscribe_user_to_learning_path($learningpath, $data);
                 }
             }
@@ -101,14 +122,27 @@ class mod_adele_observer {
      * @param bool $update Whether this is an update.
      */
     public static function enroll_all_participants($adelelp, $data, $update = false) {
-        $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
+        $learningpath = \local_adele\learning_paths::get_learning_path_by_id(
+            $adelelp->learningpathid
+        );
+        if (!$learningpath) {
+            return;
+        }
         $coursecontext = context_course::instance($data->courseid);
-        $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id, u.username, u.firstname, u.lastname, u.email');
+        $enrolledusers = get_enrolled_users(
+            $coursecontext,
+            '',
+            0,
+            'u.id, u.username, u.firstname, u.lastname, u.email'
+        );
         $userparams = new stdClass();
         $userparams->userid = $data->userid;
         foreach ($enrolledusers as $user) {
             $userparams->relateduserid = $user->id;
-            enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
+            \local_adele\enrollment::subscribe_user_to_learning_path(
+                $learningpath,
+                $userparams
+            );
         }
     }
 
@@ -120,7 +154,12 @@ class mod_adele_observer {
      * @param bool $update Whether this is an update.
      */
     public static function enroll_starting_nodes_participants($adelelp, $data, $update = false) {
-        $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
+        $learningpath = \local_adele\learning_paths::get_learning_path_by_id(
+            $adelelp->learningpathid
+        );
+        if (!$learningpath) {
+            return;
+        }
         $learningpath->json = json_decode($learningpath->json, true);
         foreach (($learningpath->json['tree']['nodes'] ?? []) as $node) {
             if (in_array('starting_node', $node['parentCourse'])) {
@@ -132,7 +171,10 @@ class mod_adele_observer {
                     foreach ($enrolledusers as $user) {
                         self::subscribe_user_course($data, $user);
                         $userparams->relateduserid = $user->id;
-                        enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
+                        \local_adele\enrollment::subscribe_user_to_learning_path(
+                            $learningpath,
+                            $userparams
+                        );
                     }
                 }
             }
@@ -147,7 +189,12 @@ class mod_adele_observer {
      * @param bool $update Whether this is an update.
      */
     public static function enroll_any_nodes_participants($adelelp, $data, $update = false) {
-        $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
+        $learningpath = \local_adele\learning_paths::get_learning_path_by_id(
+            $adelelp->learningpathid
+        );
+        if (!$learningpath) {
+            return;
+        }
         $learningpath->json = json_decode($learningpath->json, true);
         foreach (($learningpath->json['tree']['nodes'] ?? []) as $node) {
             foreach ($node['data']['course_node_id'] as $courseid) {
@@ -158,7 +205,10 @@ class mod_adele_observer {
                 foreach ($enrolledusers as $user) {
                     self::subscribe_user_course($data, $user);
                     $userparams->relateduserid = $user->id;
-                    enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
+                    \local_adele\enrollment::subscribe_user_to_learning_path(
+                        $learningpath,
+                        $userparams
+                    );
                 }
             }
         }
@@ -175,15 +225,19 @@ class mod_adele_observer {
         if (enrol_is_enabled('manual') && $enrol = enrol_get_plugin('manual')) {
             $instances = $DB->get_records(
                 'enrol',
-                ['enrol' => 'manual', 'courseid' => $data->courseid, 'status' => ENROL_INSTANCE_ENABLED],
+                [
+                    'enrol' => 'manual',
+                    'courseid' => $data->courseid,
+                    'status' => ENROL_INSTANCE_ENABLED,
+                ],
                 'sortorder,id ASC'
             );
             if ($instances) {
                 $context = context_course::instance($data->courseid);
-
                 $isenrolled = is_enrolled($context, $user->id);
                 if (!$isenrolled) {
-                    $instance = reset($instances); // Use the first manual enrolment plugin in the course.
+                    // Use the first manual enrolment plugin in the course.
+                    $instance = reset($instances);
                     $selectedrole = get_config('local_adele', 'enroll_as_setting');
                     $enrol->enrol_user($instance, $user->id, $selectedrole);
                 }
