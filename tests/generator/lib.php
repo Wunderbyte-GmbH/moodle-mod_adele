@@ -23,16 +23,4 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_adele_generator extends testing_module_generator {
-    /**
-     * Create booking instance
-     *
-     * @param mixed|null $record
-     * @param array|null $options
-     *
-     * @return stdClass
-     *
-     */
-    public function create_instance($record = null, ?array $options = null) {
-        return parent::create_instance($record, $options);
-    }
 }
