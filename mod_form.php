@@ -75,12 +75,26 @@ class mod_adele_mod_form extends moodleform_mod {
             'static',
             'link',
             get_string('mform_options_create_learningpath', 'mod_adele'),
-            '<a class ="btn btn-secondary" href="'. $editorurl .'" target="blank">' .
+            '<a class ="btn btn-secondary" href="' . $editorurl . '" target="blank">' .
             get_string('mform_options_link_create_learningpath', 'mod_adele') .
             '</a>'
         );
 
         $records = learning_paths::get_editable_learning_paths();
+
+        // The user is not an editor of (and did not create) any learning path, so the
+        // autocomplete below would otherwise be silently empty (#473). Explain why.
+        if (empty($records)) {
+            $mform->addElement(
+                'static',
+                'nolearningpathpermission',
+                '',
+                \html_writer::div(
+                    get_string('mform_no_learningpath_permission', 'mod_adele'),
+                    'alert alert-warning'
+                )
+            );
+        }
 
         $select = [];
         $select[0] = get_string('noselection', 'form');

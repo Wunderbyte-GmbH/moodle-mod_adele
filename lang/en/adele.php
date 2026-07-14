@@ -34,6 +34,7 @@ $string['adelename_help'] = 'Help for Learning path';
 $string['adelesettings'] = 'Learning path Settings';
 $string['completionlearningpathfinished'] = 'Learningpath completion';
 $string['completionlearningpathfinished:desc'] = 'Activity completion will be triggered if learning path is finished';
+$string['mform_no_learningpath_permission'] = 'You do not have permission to select a learning path. Become an editor of a learning path, or create one, to be able to choose it here.';
 $string['mform_options_create_learningpath'] = 'Create learning path';
 $string['mform_options_link_create_learningpath'] = 'Link to learning path creation';
 $string['mform_options_no_selection'] = 'No selection';
