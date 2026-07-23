@@ -61,7 +61,7 @@ class mod_adele_observer {
             $adelelp = $DB->get_record(
                 'adele',
                 ['id' => $data->other['instanceid']],
-                'learningpathid, participantslist'
+                'learningpathid, participantslist, hostenrolmentmode'
             );
             if (!$adelelp) {
                 return $data;
@@ -177,7 +177,12 @@ class mod_adele_observer {
             return;
         }
 
-        $embeddings = $DB->get_records('adele', null, '', 'id, course, learningpathid, participantslist');
+        $embeddings = $DB->get_records(
+            'adele',
+            null,
+            '',
+            'id, course, learningpathid, participantslist, hostenrolmentmode'
+        );
         foreach ($embeddings as $embedding) {
             $options = array_map('trim', explode(',', (string) $embedding->participantslist));
             if (!in_array('2', $options) && !in_array('3', $options)) {
@@ -226,7 +231,8 @@ class mod_adele_observer {
                 (int) $embedding->learningpathid,
                 (int) $embedding->course,
                 $userid,
-                $entitled
+                $entitled,
+                (string) ($embedding->hostenrolmentmode ?? \enrol_adele\local\reconciler::MODE_VISIBLE)
             );
         }
     }
@@ -310,7 +316,12 @@ class mod_adele_observer {
                     $userparams = new stdClass();
                     $userparams->userid = $data->userid;
                     foreach ($enrolledusers as $user) {
-                        self::subscribe_user_course($data, $user, $adelelp->learningpathid);
+                        self::subscribe_user_course(
+                            $data,
+                            $user,
+                            $adelelp->learningpathid,
+                            $adelelp->hostenrolmentmode ?? 'visible'
+                        );
                         $userparams->relateduserid = $user->id;
                         enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
                     }
@@ -353,7 +364,12 @@ class mod_adele_observer {
                         continue;
                     }
                     $seen[$user->id] = true;
-                    self::subscribe_user_course($data, $user, $adelelp->learningpathid);
+                    self::subscribe_user_course(
+                        $data,
+                        $user,
+                        $adelelp->learningpathid,
+                        $adelelp->hostenrolmentmode ?? 'visible'
+                    );
                     $userparams->relateduserid = $user->id;
                     enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
                 }
@@ -370,21 +386,27 @@ class mod_adele_observer {
      * enrol_adele — the same instance reconcile_host_user() manages from the
      * live event path in sync_host_access_for_node_enrolment(), keeping the
      * one-time activity-save sweep and the ongoing observer consistent.
+     * $mode (requirement mod_adele #22) lets a teacher scale that access back
+     * (visible/hidden/none) instead of it always being an active enrolment.
      * Falls back to enrol_manual only when enrol_adele is not installed
-     * (L-Q-08); $learningpathid is required to take the enrol_adele path.
+     * (L-Q-08), in which case $mode has no effect — enrol_manual has no
+     * concept of a suspended-but-visible or skipped enrolment here.
+     * $learningpathid is required to take the enrol_adele path.
      *
      * @param base $data
      * @param object $user
      * @param int|null $learningpathid Required to enrol via enrol_adele.
+     * @param string $mode One of enrol_adele\local\reconciler::MODE_* (defaults to visible).
      */
-    public static function subscribe_user_course($data, $user, $learningpathid = null) {
+    public static function subscribe_user_course($data, $user, $learningpathid = null, $mode = 'visible') {
         global $DB;
         if ($learningpathid !== null && class_exists('\enrol_adele\local\reconciler')) {
             \enrol_adele\local\reconciler::reconcile_host_user(
                 (int) $learningpathid,
                 (int) $data->courseid,
                 (int) $user->id,
-                true
+                true,
+                $mode
             );
             return;
         }

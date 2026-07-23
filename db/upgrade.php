@@ -64,5 +64,30 @@ function xmldb_adele_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2025030400, 'adele');
     }
 
+    if ($oldversion < 2026072301) {
+        // Requirement mod_adele #22: teachers can now scale back what
+        // participantslist options 2/3 grant in the host course (visible /
+        // hidden / no enrolment at all) instead of always enrolling actively.
+        // Default 'visible' preserves existing behaviour for every activity
+        // that predates this setting.
+        $table = new xmldb_table('adele');
+        $field = new xmldb_field(
+            'hostenrolmentmode',
+            XMLDB_TYPE_CHAR,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            'visible',
+            'completionlearningpathfinished'
+        );
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026072301, 'adele');
+    }
+
     return true;
 }
