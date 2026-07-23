@@ -3,21 +3,15 @@ name: Moodle Plugin CI
 "on": [push, pull_request]
 
 jobs:
-  ci:
+  # Modern range: Moodle 5.0-5.2 on PHP 8.2. Two-job split matches
+  # local_adele/enrol_adele's own CI (Session 002, Teil 16 — the mod_adele
+  # workflow previously had a single, auto-detected-range job, which is how
+  # the now-unsupported MOODLE_404_STABLE ended up being tested at all).
+  moodle500to502:
     uses: Wunderbyte-GmbH/catalyst-moodle-workflows/.github/workflows/ci.yml@main
     with:
-      # Change these based on your plugin's requirements
-
       disable_release: true  # Use true if using the tag-based release workflow
 
-      # Fixed (Session 002, Teil 15): this was commented out, so the reusable
-      # workflow fell back to auto-detecting the test matrix from the FULL
-      # $plugin->supported range in version.php (previously [401, 405]) —
-      # which is how MOODLE_404_STABLE ended up being tested at all. That
-      # install failed outright: the local_wunderbyte_table extra_plugin_runner
-      # below requires a newer Moodle core than 4.04 provides. 401-404 are no
-      # longer supported (see version.php); explicit override instead,
-      # matching enrol_adele/local_adele's own CI.
       moodle_branches: "MOODLE_500_STABLE MOODLE_501_STABLE MOODLE_502_STABLE"
       min_php: '8.2'
 
@@ -73,4 +67,22 @@ jobs:
       enable_phpmd: true
 
       # For strict code quality checks
+      codechecker_max_warnings: 0
+
+  # Floor: Moodle 4.5 on PHP 8.1 — the lowest version version.php still
+  # declares support for after dropping 4.01-4.04 (Session 002, Teil 15).
+  moodle405:
+    uses: Wunderbyte-GmbH/catalyst-moodle-workflows/.github/workflows/ci.yml@main
+    with:
+      disable_release: true
+
+      moodle_branches: "MOODLE_405_STABLE"
+      min_php: '8.1'
+
+      extra_plugin_runners: |
+        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
+        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle_local_adele
+
+      enable_phpmd: true
+
       codechecker_max_warnings: 0
