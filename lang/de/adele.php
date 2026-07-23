@@ -37,6 +37,7 @@ $string['completionlearningpathfinished:desc'] = 'Aktivität wird abgeschlossen 
 $string['mform_options_create_learningpath'] = 'Erstelle Lernpfad';
 $string['mform_options_link_create_learningpath'] = 'Link zur Erstellung eines Lernpfades';
 $string['mform_options_no_selection'] = 'Keine Auswahl';
+$string['mform_options_participantslist_all_courses'] = 'Alle, die in irgendeinem Knoten-Kurs des Lernpfads eingeschrieben sind';
 $string['mform_options_participantslist_starting_courses'] = 'Jeder ist eingeschrieben, der in einem Startknoten ist';
 $string['mform_options_participantslist_this_course'] = 'Jeder, der für diesen Kurs eingeschrieben ist';
 $string['mform_options_required'] = 'notwendig';

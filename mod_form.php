@@ -75,7 +75,7 @@ class mod_adele_mod_form extends moodleform_mod {
             'static',
             'link',
             get_string('mform_options_create_learningpath', 'mod_adele'),
-            '<a class ="btn btn-secondary" href="'. $editorurl .'" target="blank">' .
+            '<a class ="btn btn-secondary" href="' . $editorurl . '" target="blank">' .
             get_string('mform_options_link_create_learningpath', 'mod_adele') .
             '</a>'
         );
@@ -120,6 +120,7 @@ class mod_adele_mod_form extends moodleform_mod {
         $participantslist = [
           1 => get_string('mform_options_participantslist_this_course', 'mod_adele'),
           2 => get_string('mform_options_participantslist_starting_courses', 'mod_adele'),
+          3 => get_string('mform_options_participantslist_all_courses', 'mod_adele'),
         ];
         $mform->addElement(
             'autocomplete',

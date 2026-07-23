@@ -37,6 +37,7 @@ $string['completionlearningpathfinished:desc'] = 'Activity completion will be tr
 $string['mform_options_create_learningpath'] = 'Create learning path';
 $string['mform_options_link_create_learningpath'] = 'Link to learning path creation';
 $string['mform_options_no_selection'] = 'No selection';
+$string['mform_options_participantslist_all_courses'] = 'Everyone who is subscribed to any node of the learning path';
 $string['mform_options_participantslist_starting_courses'] = 'Everyone who is subscribed to at least one starting node';
 $string['mform_options_participantslist_this_course'] = 'Everyone who is subscribed to that course';
 $string['mform_options_required'] = 'required';

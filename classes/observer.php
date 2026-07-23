@@ -30,6 +30,18 @@ use local_adele\learning_paths;
  * Event observer for local_adele.
  */
 class mod_adele_observer {
+    /**
+     * Check whether the local_adele classes this observer relies on exist.
+     *
+     * Ported from the ralferlebach-fix-enrolment-issue branch: keeps the module
+     * from fataling when local_adele is missing or being upgraded.
+     *
+     * @return bool
+     */
+    private static function is_local_adele_available(): bool {
+        return class_exists('local_adele\\learning_paths')
+            && class_exists('local_adele\\enrollment');
+    }
 
     /**
      * Observer for changes inside the module.
@@ -43,17 +55,25 @@ class mod_adele_observer {
     public static function saved_module($data) {
         global $DB;
         if ($data->other['modulename'] == 'adele') {
+            if (!self::is_local_adele_available()) {
+                return $data;
+            }
             $adelelp = $DB->get_record(
                 'adele',
                 ['id' => $data->other['instanceid']],
                 'learningpathid, participantslist'
             );
+            if (!$adelelp) {
+                return $data;
+            }
             $adelelp->participantslist = explode(',', $adelelp->participantslist);
             foreach ($adelelp->participantslist as $participantslist) {
                 if ($participantslist == '1') {
                     self::enroll_all_participants($adelelp, $data);
                 } else if ($participantslist == '2') {
                     self::enroll_starting_nodes_participants($adelelp, $data);
+                } else if ($participantslist == '3') {
+                    self::enroll_any_nodes_participants($adelelp, $data);
                 }
             }
         }
@@ -69,7 +89,13 @@ class mod_adele_observer {
      */
     public static function user_enrolment_created($data) {
         global $DB;
+        if (!self::is_local_adele_available()) {
+            return $data;
+        }
         $modules = get_course_mods($data->courseid);
+        if (!$modules) {
+            return $data;
+        }
         foreach ($modules as $module) {
             if ($module->modname == 'adele' && $module->deletioninprogress == 0) {
                 $adelelp = $DB->get_record(
@@ -77,11 +103,20 @@ class mod_adele_observer {
                     ['id' => $module->instance],
                     'learningpathid, participantslist'
                 );
-                if (isset($adelelp->participantslist) && $adelelp->participantslist == '1') {
+                if (!$adelelp) {
+                    continue;
+                }
+                // The stored value is a comma list ('1', '2', '1,2', ...): explode
+                // before comparing. The former raw comparison ($participantslist
+                // == '1') silently skipped the subscription whenever more than
+                // one option was selected (fix A-14).
+                $options = explode(',', (string) $adelelp->participantslist);
+                if (in_array('1', $options)) {
                     // Subscribe user to learning path.
                     $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
-                    $coursecontext = context_course::instance($data->courseid);
-                    enrollment::subscribe_user_to_learning_path($learningpath, $data, $coursecontext->instanceid);
+                    if ($learningpath) {
+                        enrollment::subscribe_user_to_learning_path($learningpath, $data);
+                    }
                 }
             }
         }
@@ -95,15 +130,18 @@ class mod_adele_observer {
      * @param base $data
      * @param bool $update
      */
-    public static function enroll_all_participants($adelelp, $data, $update=false) {
+    public static function enroll_all_participants($adelelp, $data, $update = false) {
         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
+        if (!$learningpath) {
+            return;
+        }
         $coursecontext = context_course::instance($data->courseid);
         $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id, u.username, u.firstname, u.lastname, u.email');
         $userparams = new stdClass();
         $userparams->userid = $data->userid;
         foreach ($enrolledusers as $user) {
             $userparams->relateduserid = $user->id;
-            enrollment::subscribe_user_to_learning_path($learningpath, $userparams, $coursecontext->instanceid);
+            enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
         }
     }
 
@@ -116,6 +154,9 @@ class mod_adele_observer {
      */
     public static function enroll_starting_nodes_participants($adelelp, $data, $update = false) {
         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
+        if (!$learningpath) {
+            return;
+        }
         $learningpath->json = json_decode($learningpath->json, true);
         foreach (($learningpath->json['tree']['nodes'] ?? []) as $node) {
             if (in_array('starting_node', $node['parentCourse'])) {
@@ -127,7 +168,7 @@ class mod_adele_observer {
                     foreach ($enrolledusers as $user) {
                         self::subscribe_user_course($data, $user);
                         $userparams->relateduserid = $user->id;
-                        enrollment::subscribe_user_to_learning_path($learningpath, $userparams, $data->courseid);
+                        enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
                     }
                 }
             }
@@ -135,7 +176,52 @@ class mod_adele_observer {
     }
 
     /**
-     * Enroll all participants inside the starting nodes.
+     * Enroll all participants inside any node of the learning path.
+     *
+     * Subscription option 3, ported from the ralferlebach-fix-enrolment-issue
+     * branch: everyone enrolled in any node course of the learning path is
+     * enrolled into the host course (manual, decision F-7/A-10) and subscribed
+     * to the learning path. Users are deduplicated across node courses.
+     *
+     * @param object $adelelp
+     * @param base $data
+     * @param bool $update
+     */
+    public static function enroll_any_nodes_participants($adelelp, $data, $update = false) {
+        $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
+        if (!$learningpath) {
+            return;
+        }
+        $learningpath->json = json_decode($learningpath->json, true);
+        $seen = [];
+        foreach (($learningpath->json['tree']['nodes'] ?? []) as $node) {
+            $courseids = $node['data']['course_node_id'] ?? [];
+            if (!is_array($courseids)) {
+                continue;
+            }
+            foreach ($courseids as $courseid) {
+                $coursecontext = context_course::instance($courseid);
+                $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id');
+                $userparams = new stdClass();
+                $userparams->userid = $data->userid;
+                foreach ($enrolledusers as $user) {
+                    if (isset($seen[$user->id])) {
+                        continue;
+                    }
+                    $seen[$user->id] = true;
+                    self::subscribe_user_course($data, $user);
+                    $userparams->relateduserid = $user->id;
+                    enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
+                }
+            }
+        }
+    }
+
+    /**
+     * Enroll all participants in a given course.
+     *
+     * The host course enrolment deliberately stays enrol_manual
+     * (decision F-7/A-10); enrol_adele owns target course enrolments only.
      *
      * @param base $data
      * @param object $user
