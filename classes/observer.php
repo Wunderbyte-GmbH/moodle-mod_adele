@@ -84,6 +84,11 @@ class mod_adele_observer {
      * Observer for changes inside the module.
      * We enrol the user to the learningpath.
      *
+     * Handles subscription option 1 directly (the changed course itself hosts
+     * the activity), then hands off to sync_host_access_for_node_enrolment()
+     * for options 2/3, where the changed course is a NODE course of some
+     * OTHER embedding rather than its host.
+     *
      * @param base $data
      * @return base
      */
@@ -93,34 +98,173 @@ class mod_adele_observer {
             return $data;
         }
         $modules = get_course_mods($data->courseid);
-        if (!$modules) {
-            return $data;
-        }
-        foreach ($modules as $module) {
-            if ($module->modname == 'adele' && $module->deletioninprogress == 0) {
-                $adelelp = $DB->get_record(
-                    'adele',
-                    ['id' => $module->instance],
-                    'learningpathid, participantslist'
-                );
-                if (!$adelelp) {
-                    continue;
-                }
-                // The stored value is a comma list ('1', '2', '1,2', ...): explode
-                // before comparing. The former raw comparison ($participantslist
-                // == '1') silently skipped the subscription whenever more than
-                // one option was selected (fix A-14).
-                $options = explode(',', (string) $adelelp->participantslist);
-                if (in_array('1', $options)) {
-                    // Subscribe user to learning path.
-                    $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
-                    if ($learningpath) {
-                        enrollment::subscribe_user_to_learning_path($learningpath, $data);
+        if ($modules) {
+            foreach ($modules as $module) {
+                if ($module->modname == 'adele' && $module->deletioninprogress == 0) {
+                    $adelelp = $DB->get_record(
+                        'adele',
+                        ['id' => $module->instance],
+                        'learningpathid, participantslist'
+                    );
+                    if (!$adelelp) {
+                        continue;
+                    }
+                    // The stored value is a comma list ('1', '2', '1,2', ...): explode
+                    // before comparing. The former raw comparison ($participantslist
+                    // == '1') silently skipped the subscription whenever more than
+                    // one option was selected (fix A-14).
+                    $options = explode(',', (string) $adelelp->participantslist);
+                    if (in_array('1', $options)) {
+                        // Subscribe user to learning path.
+                        $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
+                        if ($learningpath) {
+                            enrollment::subscribe_user_to_learning_path($learningpath, $data);
+                        }
                     }
                 }
             }
         }
+        self::sync_host_access_for_node_enrolment($data);
         return $data;
+    }
+
+    /**
+     * Observer for user_enrolment_deleted.
+     *
+     * Options 2/3 grant host-course access as a CONSEQUENCE of node-course
+     * membership; losing that membership must be reflected the same way
+     * losing it is granted — live, not only re-evaluated the next time the
+     * activity is saved. Option 1 is intentionally NOT handled here: a host
+     * course enrolment lost through option 1 is the trigger enrol_adele's own
+     * observer (requirement A-4) already reacts to on the target-course side;
+     * this observer only concerns the host-course consequence of options 2/3.
+     *
+     * @param base $data
+     * @return base
+     */
+    public static function user_enrolment_deleted($data) {
+        if (!self::is_local_adele_available()) {
+            return $data;
+        }
+        self::sync_host_access_for_node_enrolment($data);
+        return $data;
+    }
+
+    /**
+     * Recompute and apply host-course access for every option-2/3 embedding
+     * that the changed course is a qualifying node course of.
+     *
+     * Deliberately recomputes entitlement FRESH from the current enrolment
+     * state rather than trusting the single event that triggered the call: a
+     * node course can be shared by several nodes, and a user can hold several
+     * concurrent node-course enrolments, so only a fresh read is race-safe.
+     * No-op when enrol_adele is not installed (L-Q-08) — without it there is
+     * no revocable host-course mechanism to drive, and the one-time sweep in
+     * enroll_starting_nodes_participants()/enroll_any_nodes_participants()
+     * (still enrol_manual in that case) remains the only host-course trigger.
+     *
+     * @param base $data The user_enrolment_created/deleted event data.
+     * @return void
+     */
+    private static function sync_host_access_for_node_enrolment($data): void {
+        global $DB;
+        if (!class_exists('\enrol_adele\local\reconciler')) {
+            return;
+        }
+        $userid = (int) $data->relateduserid;
+        $courseid = (int) $data->courseid;
+        if (!$userid || !$courseid) {
+            return;
+        }
+
+        $embeddings = $DB->get_records('adele', null, '', 'id, course, learningpathid, participantslist');
+        foreach ($embeddings as $embedding) {
+            $options = array_map('trim', explode(',', (string) $embedding->participantslist));
+            if (!in_array('2', $options) && !in_array('3', $options)) {
+                continue;
+            }
+            $learningpath = learning_paths::get_learning_path_by_id($embedding->learningpathid);
+            if (!$learningpath) {
+                continue;
+            }
+            $json = is_string($learningpath->json) ? json_decode($learningpath->json, true) : $learningpath->json;
+            $touchesthislp = false;
+            foreach (($json['tree']['nodes'] ?? []) as $node) {
+                $nodecourseids = array_map('intval', $node['data']['course_node_id'] ?? []);
+                if (in_array($courseid, $nodecourseids)) {
+                    $touchesthislp = true;
+                    break;
+                }
+            }
+            if (!$touchesthislp) {
+                // The changed course has nothing to do with this embedding's
+                // learning path; skip the more expensive per-option check.
+                continue;
+            }
+
+            $entitled = false;
+            if (in_array('2', $options) && self::is_user_entitled_to_host_via_option($learningpath, $userid, '2')) {
+                $entitled = true;
+            }
+            if (
+                !$entitled && in_array('3', $options)
+                && self::is_user_entitled_to_host_via_option($learningpath, $userid, '3')
+            ) {
+                $entitled = true;
+            }
+
+            if ($entitled) {
+                // Mirror the one-time sweep: make sure the learning-path
+                // subscription itself exists too, not just the host enrolment.
+                $userparams = new stdClass();
+                $userparams->userid = $data->userid ?? $userid;
+                $userparams->relateduserid = $userid;
+                enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
+            }
+
+            \enrol_adele\local\reconciler::reconcile_host_user(
+                (int) $embedding->learningpathid,
+                (int) $embedding->course,
+                $userid,
+                $entitled
+            );
+        }
+    }
+
+    /**
+     * Whether a user currently holds ANY enrolment (any method, suspended
+     * counts — consistent with decision F-4/A-8 elsewhere in this project) in
+     * a node course qualifying under the given subscription option.
+     *
+     * @param object $learningpath The learning path (json may be string or array).
+     * @param int $userid The user id.
+     * @param string $option '2' (starting node) or '3' (any node).
+     * @return bool
+     */
+    private static function is_user_entitled_to_host_via_option($learningpath, int $userid, string $option): bool {
+        global $DB;
+        $json = is_string($learningpath->json) ? json_decode($learningpath->json, true) : $learningpath->json;
+        $courseids = [];
+        foreach (($json['tree']['nodes'] ?? []) as $node) {
+            if ($option === '2' && !in_array('starting_node', $node['parentCourse'] ?? [])) {
+                continue;
+            }
+            $nodecourseids = $node['data']['course_node_id'] ?? [];
+            if (is_array($nodecourseids)) {
+                $courseids = array_merge($courseids, array_map('intval', $nodecourseids));
+            }
+        }
+        $courseids = array_unique($courseids);
+        if (!$courseids) {
+            return false;
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        $sql = "SELECT 1
+                  FROM {user_enrolments} ue
+                  JOIN {enrol} e ON e.id = ue.enrolid
+                 WHERE ue.userid = :userid
+                       AND e.courseid {$insql}";
+        return $DB->record_exists_sql($sql, ['userid' => $userid] + $inparams);
     }
 
     /**
@@ -166,7 +310,7 @@ class mod_adele_observer {
                     $userparams = new stdClass();
                     $userparams->userid = $data->userid;
                     foreach ($enrolledusers as $user) {
-                        self::subscribe_user_course($data, $user);
+                        self::subscribe_user_course($data, $user, $adelelp->learningpathid);
                         $userparams->relateduserid = $user->id;
                         enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
                     }
@@ -180,8 +324,8 @@ class mod_adele_observer {
      *
      * Subscription option 3, ported from the ralferlebach-fix-enrolment-issue
      * branch: everyone enrolled in any node course of the learning path is
-     * enrolled into the host course (manual, decision F-7/A-10) and subscribed
-     * to the learning path. Users are deduplicated across node courses.
+     * enrolled into the host course and subscribed to the learning path. Users
+     * are deduplicated across node courses.
      *
      * @param object $adelelp
      * @param base $data
@@ -209,7 +353,7 @@ class mod_adele_observer {
                         continue;
                     }
                     $seen[$user->id] = true;
-                    self::subscribe_user_course($data, $user);
+                    self::subscribe_user_course($data, $user, $adelelp->learningpathid);
                     $userparams->relateduserid = $user->id;
                     enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
                 }
@@ -218,16 +362,32 @@ class mod_adele_observer {
     }
 
     /**
-     * Enroll all participants in a given course.
+     * Enroll a user into the host course.
      *
-     * The host course enrolment deliberately stays enrol_manual
-     * (decision F-7/A-10); enrol_adele owns target course enrolments only.
+     * Requirement following ticket #486 (Session 001 Teil 5): for options 2/3
+     * the host-course enrolment is a CONSEQUENCE of node-course membership and
+     * must be revocable the same way it was granted, so it now goes through
+     * enrol_adele — the same instance reconcile_host_user() manages from the
+     * live event path in sync_host_access_for_node_enrolment(), keeping the
+     * one-time activity-save sweep and the ongoing observer consistent.
+     * Falls back to enrol_manual only when enrol_adele is not installed
+     * (L-Q-08); $learningpathid is required to take the enrol_adele path.
      *
      * @param base $data
      * @param object $user
+     * @param int|null $learningpathid Required to enrol via enrol_adele.
      */
-    public static function subscribe_user_course($data, $user) {
+    public static function subscribe_user_course($data, $user, $learningpathid = null) {
         global $DB;
+        if ($learningpathid !== null && class_exists('\enrol_adele\local\reconciler')) {
+            \enrol_adele\local\reconciler::reconcile_host_user(
+                (int) $learningpathid,
+                (int) $data->courseid,
+                (int) $user->id,
+                true
+            );
+            return;
+        }
         if (enrol_is_enabled('manual') && $enrol = enrol_get_plugin('manual')) {
             $instances = $DB->get_records(
                 'enrol',

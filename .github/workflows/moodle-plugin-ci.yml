@@ -14,8 +14,16 @@ jobs:
       # min_php: "7.4"  # Optional: Set minimum PHP version
 
       # Command to install more dependencies
+      #
+      # local_adele was missing here even though version.php has always
+      # declared a hard dependency on it ($plugin->dependencies['local_adele']).
+      # Added now because it became unavoidable: mod_adele 0.1.5 requires
+      # local_adele 0.4.3 specifically (enrol_adele project, Session 001,
+      # Teil 3/4), and both plugins are co-developed on the "development"
+      # branch of the ralferlebach fork.
       extra_plugin_runners: |
         moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
+        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle_local_adele
       #   moodle-plugin-ci add-plugin --branch master branchup/moodle-filter_shortcodes
       #   moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-tool_mocktesttime
 
