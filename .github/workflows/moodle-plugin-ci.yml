@@ -1,6 +1,6 @@
 name: Moodle Plugin CI
 
-on: [push, pull_request]
+"on": [push, pull_request]
 
 jobs:
   ci:
@@ -10,8 +10,16 @@ jobs:
 
       disable_release: true  # Use true if using the tag-based release workflow
 
-      # moodle_branches: "MOODLE_401_STABLE MOODLE_402_STABLE"  # Optional: Only test specific Moodle versions
-      # min_php: "7.4"  # Optional: Set minimum PHP version
+      # Fixed (Session 002, Teil 15): this was commented out, so the reusable
+      # workflow fell back to auto-detecting the test matrix from the FULL
+      # $plugin->supported range in version.php (previously [401, 405]) —
+      # which is how MOODLE_404_STABLE ended up being tested at all. That
+      # install failed outright: the local_wunderbyte_table extra_plugin_runner
+      # below requires a newer Moodle core than 4.04 provides. 401-404 are no
+      # longer supported (see version.php); explicit override instead,
+      # matching enrol_adele/local_adele's own CI.
+      moodle_branches: "MOODLE_500_STABLE MOODLE_501_STABLE MOODLE_502_STABLE"
+      min_php: '8.2'
 
       # Command to install more dependencies
       #
@@ -46,6 +54,18 @@ jobs:
       # disable_grunt: true
       # disable_phpdoc: true
       # disable_phpcs: true
+      #
+      # phplint currently fails with "Not enough arguments (missing: 'plugin').",
+      # a Symfony console error meaning moodle-plugin-ci phplint was invoked
+      # with no plugin path at all - not a syntax problem in this repository's
+      # own PHP (phpcs' own run in the same job DID resolve the plugin path
+      # correctly and scanned real files). This looks like a bug/regression
+      # inside the shared Wunderbyte-GmbH/catalyst-moodle-workflows reusable
+      # workflow itself (tracked here via @main, so any upstream change there
+      # applies immediately) rather than anything wrong in this file. Left
+      # enabled for now since it's a coverage loss either way; uncomment
+      # below as a pragmatic stopgap if it keeps blocking CI, and consider
+      # pinning @main to a known-good tag/commit instead.
       # disable_phplint: true
       # disable_ci_validate: true
 

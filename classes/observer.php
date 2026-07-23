@@ -163,6 +163,20 @@ class mod_adele_observer {
      * enroll_starting_nodes_participants()/enroll_any_nodes_participants()
      * (still enrol_manual in that case) remains the only host-course trigger.
      *
+     * Requirement mod_adele #23: several embeddings can target the SAME
+     * (learning path, host course) pair — one enrol_adele host instance is
+     * shared between them (its identity does not include the mod_adele
+     * activity id). Every embedding's (entitled, mode) is therefore computed
+     * FIRST and grouped by that pair; only ONE reconcile_host_user() call is
+     * made per group, on the aggregated result — never one call per
+     * embedding overwriting whatever the previous one decided. The
+     * aggregation rule is "most generous option wins": entitled is the union
+     * across the group (any embedding granting access is enough), and the
+     * visibility mode is the most permissive one among the embeddings that
+     * actually granted it (visible > hidden > none) — consistent with the
+     * pre-existing target-course rule that a shared course stays accessible
+     * as long as any node still grants it (decision F-1/A-6).
+     *
      * @param base $data The user_enrolment_created/deleted event data.
      * @return void
      */
@@ -183,6 +197,10 @@ class mod_adele_observer {
             '',
             'id, course, learningpathid, participantslist, hostenrolmentmode'
         );
+
+        // Group by (learningpathid, hostcourseid) — the granularity a single
+        // enrol_adele host instance is actually scoped to.
+        $groups = [];
         foreach ($embeddings as $embedding) {
             $options = array_map('trim', explode(',', (string) $embedding->participantslist));
             if (!in_array('2', $options) && !in_array('3', $options)) {
@@ -227,13 +245,58 @@ class mod_adele_observer {
                 enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
             }
 
+            $groupkey = $embedding->learningpathid . ':' . $embedding->course;
+            if (!isset($groups[$groupkey])) {
+                $groups[$groupkey] = (object) [
+                    'learningpathid' => (int) $embedding->learningpathid,
+                    'hostcourseid' => (int) $embedding->course,
+                    'entitled' => false,
+                    'moderank' => -1,
+                    'mode' => \enrol_adele\local\reconciler::MODE_VISIBLE,
+                ];
+            }
+            if ($entitled) {
+                $groups[$groupkey]->entitled = true;
+                $mode = (string) ($embedding->hostenrolmentmode ?: \enrol_adele\local\reconciler::MODE_VISIBLE);
+                $rank = self::host_mode_rank($mode);
+                // Only an embedding that ACTUALLY grants access gets a say in
+                // how visible that access is — one that isn't entitled at all
+                // must not be able to drag a more generous sibling down.
+                if ($rank > $groups[$groupkey]->moderank) {
+                    $groups[$groupkey]->moderank = $rank;
+                    $groups[$groupkey]->mode = $mode;
+                }
+            }
+        }
+
+        foreach ($groups as $group) {
             \enrol_adele\local\reconciler::reconcile_host_user(
-                (int) $embedding->learningpathid,
-                (int) $embedding->course,
+                $group->learningpathid,
+                $group->hostcourseid,
                 $userid,
-                $entitled,
-                (string) ($embedding->hostenrolmentmode ?? \enrol_adele\local\reconciler::MODE_VISIBLE)
+                $group->entitled,
+                $group->mode
             );
+        }
+    }
+
+    /**
+     * Generosity ranking for host-course visibility modes, highest first:
+     * visible > hidden > none. Used to resolve competing embeddings of the
+     * same learning path in the same host course (mod_adele #23) — the most
+     * permissive mode among the embeddings that actually grant access wins.
+     *
+     * @param string $mode One of enrol_adele\local\reconciler::MODE_*.
+     * @return int Higher is more permissive.
+     */
+    private static function host_mode_rank(string $mode): int {
+        switch ($mode) {
+            case \enrol_adele\local\reconciler::MODE_VISIBLE:
+                return 2;
+            case \enrol_adele\local\reconciler::MODE_HIDDEN:
+                return 1;
+            default:
+                return 0;
         }
     }
 

@@ -58,7 +58,16 @@ function adele_add_instance($moduleinstance, $mform = null) {
 
     $moduleinstance->timecreated = time();
 
-    $moduleinstance->participantslist = implode(',', $moduleinstance->participantslist);
+    // Fixed (Session 002, Teil 15): real form submissions send an array
+    // (mod_form.php's autocomplete-multiple element), but test fixtures and
+    // some generator/import paths already supply a plain string (e.g.
+    // tests/backup_restore_test.php passes '0' directly) - implode() on a
+    // string throws a hard TypeError since PHP 8.1. A real, pre-existing bug
+    // surfaced by the first CI run on this repository, not introduced by
+    // recent changes.
+    $moduleinstance->participantslist = is_array($moduleinstance->participantslist)
+        ? implode(',', $moduleinstance->participantslist)
+        : (string) $moduleinstance->participantslist;
 
     $moduleinstance->completionlearningpathfinished =
         isset($moduleinstance->completionlearningpathfinished) ? $moduleinstance->completionlearningpathfinished : 0;
@@ -84,7 +93,10 @@ function adele_update_instance($moduleinstance, $mform = null) {
     $moduleinstance->timemodified = time();
     $moduleinstance->id = $moduleinstance->instance;
 
-    $moduleinstance->participantslist = implode(',', $moduleinstance->participantslist);
+    // Same defensive fix as adele_add_instance() above.
+    $moduleinstance->participantslist = is_array($moduleinstance->participantslist)
+        ? implode(',', $moduleinstance->participantslist)
+        : (string) $moduleinstance->participantslist;
 
     $moduleinstance->completionlearningpathfinished =
         isset($moduleinstance->completionlearningpathfinished) ? $moduleinstance->completionlearningpathfinished : 0;
