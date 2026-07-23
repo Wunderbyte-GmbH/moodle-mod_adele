@@ -1,0 +1,25 @@
+# Enforce LF line endings for all text files.
+* text=auto eol=lf
+
+# Binary files — no conversion.
+*.png  binary
+*.jpg  binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.eot  binary
+*.min.js binary
+*.min.css binary
+
+# Exclude developer artefacts from release archives.
+.github/       export-ignore
+docs/          export-ignore
+tools/         export-ignore
+makefile       export-ignore
+CHANGELOG.md   export-ignore
+.gitattributes export-ignore
+.gitignore     export-ignore
+.phpcsignore   export-ignore
+.phpcs.xml     export-ignore
