@@ -75,7 +75,7 @@ class mod_adele_mod_form extends moodleform_mod {
             'static',
             'link',
             get_string('mform_options_create_learningpath', 'mod_adele'),
-            '<a class ="btn btn-secondary" href="'. $editorurl .'" target="blank">' .
+            '<a class ="btn btn-secondary" href="' . $editorurl . '" target="blank">' .
             get_string('mform_options_link_create_learningpath', 'mod_adele') .
             '</a>'
         );
@@ -120,6 +120,7 @@ class mod_adele_mod_form extends moodleform_mod {
         $participantslist = [
           1 => get_string('mform_options_participantslist_this_course', 'mod_adele'),
           2 => get_string('mform_options_participantslist_starting_courses', 'mod_adele'),
+          3 => get_string('mform_options_participantslist_all_courses', 'mod_adele'),
         ];
         $mform->addElement(
             'autocomplete',
@@ -130,6 +131,27 @@ class mod_adele_mod_form extends moodleform_mod {
         );
 
         $mform->addRule('participantslist', get_string('mform_options_required', 'mod_adele'), 'required', null, 'client');
+
+        // Requirement mod_adele #22: only meaningful for options 2/3 (option 1
+        // always enrols actively via enrol_manual, decision F-7/A-10). Shown
+        // unconditionally rather than JS-hidden behind participantslist, since
+        // that field is a multi-select autocomplete and Moodle's mform hideIf
+        // does not reliably track autocomplete-multiple selections client-side
+        // — the help text below states the scope instead.
+        $hostenrolmentmode = [
+            'visible' => get_string('mform_options_hostenrolmentmode_visible', 'mod_adele'),
+            'hidden' => get_string('mform_options_hostenrolmentmode_hidden', 'mod_adele'),
+            'none' => get_string('mform_options_hostenrolmentmode_none', 'mod_adele'),
+        ];
+        $mform->addElement(
+            'select',
+            'hostenrolmentmode',
+            get_string('mform_select_hostenrolmentmode', 'mod_adele'),
+            $hostenrolmentmode
+        );
+        $mform->addHelpButton('hostenrolmentmode', 'mform_select_hostenrolmentmode', 'mod_adele');
+        $mform->setDefault('hostenrolmentmode', 'visible');
+        $mform->setType('hostenrolmentmode', PARAM_ALPHA);
 
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();

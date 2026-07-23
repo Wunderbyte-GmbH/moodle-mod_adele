@@ -38,4 +38,11 @@
         'eventname' => '\core\event\user_enrolment_created',
         'callback' => 'mod_adele_observer::user_enrolment_created',
     ],
+    [
+        // Live counterpart to the enrolment case above: losing membership in a
+        // node course must revoke host-course access the same way gaining it
+        // granted access (subscription options 2/3, ticket #486 follow-up).
+        'eventname' => '\core\event\user_enrolment_deleted',
+        'callback' => 'mod_adele_observer::user_enrolment_deleted',
+    ],
  ];

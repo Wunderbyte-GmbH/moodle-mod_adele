@@ -1,1 +1,53 @@
+# OS artefacts
 .DS_Store
+Thumbs.db
+desktop.ini
+*Zone.Identifier
+._*
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# vue
+/vue3/node_modules/
+/vue3/coverage
+
+# PHP / Composer
+vendor/
+composer.lock
+
+# AMD build artefacts (keep src, ignore build output)
+amd/build/
+
+# moodle-plugin-ci working directories
+ci/
+moodle/
+
+# PHPUnit / coverage
+.phpunit.result.cache
+.phpunit.cache/
+coverage/
+*.clover
+
+# Behat screenshots
+behatfaildumps/
+
+# Temporary / backup files
+*.bak
+*.tmp
+*.swp
+*~
+
+# Local developer overrides
+.env
+.env.local
