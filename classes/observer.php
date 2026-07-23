@@ -361,6 +361,19 @@ class mod_adele_observer {
     /**
      * Enroll all participants inside the starting nodes.
      *
+     * Requirement E-16: routes each swept user through
+     * sync_host_access_for_node_enrolment() — the SAME aggregation the live
+     * observer uses (mod_adele #23) — via a synthetic event-like object,
+     * instead of calling subscribe_user_course() directly with only this
+     * activity's own mode. Previously, saving a narrower sibling embedding
+     * (same learning path, same host course) after a more generous one could
+     * transiently downgrade access the sweep for THAT activity had no way to
+     * know about; reusing the live aggregation logic here closes that gap
+     * without duplicating it. This also folds in the learning-path
+     * subscription step (sync_host_access_for_node_enrolment() already does
+     * that when entitled), so the separate subscribe_user_to_learning_path()
+     * call below is no longer needed for the swept users.
+     *
      * @param object $adelelp
      * @param base $data
      * @param bool $update
@@ -376,17 +389,12 @@ class mod_adele_observer {
                 foreach ($node['data']['course_node_id'] as $startingnodeid) {
                     $coursecontext = context_course::instance($startingnodeid);
                     $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id');
-                    $userparams = new stdClass();
-                    $userparams->userid = $data->userid;
                     foreach ($enrolledusers as $user) {
-                        self::subscribe_user_course(
-                            $data,
-                            $user,
-                            $adelelp->learningpathid,
-                            $adelelp->hostenrolmentmode ?? 'visible'
-                        );
-                        $userparams->relateduserid = $user->id;
-                        enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
+                        self::sync_host_access_for_node_enrolment((object) [
+                            'relateduserid' => $user->id,
+                            'courseid' => (int) $startingnodeid,
+                            'userid' => $data->userid,
+                        ]);
                     }
                 }
             }
@@ -399,7 +407,9 @@ class mod_adele_observer {
      * Subscription option 3, ported from the ralferlebach-fix-enrolment-issue
      * branch: everyone enrolled in any node course of the learning path is
      * enrolled into the host course and subscribed to the learning path. Users
-     * are deduplicated across node courses.
+     * are deduplicated across node courses. Requirement E-16: same
+     * aggregation-reuse rationale as enroll_starting_nodes_participants()
+     * above.
      *
      * @param object $adelelp
      * @param base $data
@@ -420,41 +430,44 @@ class mod_adele_observer {
             foreach ($courseids as $courseid) {
                 $coursecontext = context_course::instance($courseid);
                 $enrolledusers = get_enrolled_users($coursecontext, '', 0, 'u.id');
-                $userparams = new stdClass();
-                $userparams->userid = $data->userid;
                 foreach ($enrolledusers as $user) {
                     if (isset($seen[$user->id])) {
                         continue;
                     }
                     $seen[$user->id] = true;
-                    self::subscribe_user_course(
-                        $data,
-                        $user,
-                        $adelelp->learningpathid,
-                        $adelelp->hostenrolmentmode ?? 'visible'
-                    );
-                    $userparams->relateduserid = $user->id;
-                    enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
+                    self::sync_host_access_for_node_enrolment((object) [
+                        'relateduserid' => $user->id,
+                        'courseid' => (int) $courseid,
+                        'userid' => $data->userid,
+                    ]);
                 }
             }
         }
     }
 
     /**
-     * Enroll a user into the host course.
+     * Enrol a single user into the host course, without the multi-embedding
+     * aggregation sync_host_access_for_node_enrolment() applies.
      *
      * Requirement following ticket #486 (Session 001 Teil 5): for options 2/3
      * the host-course enrolment is a CONSEQUENCE of node-course membership and
-     * must be revocable the same way it was granted, so it now goes through
+     * must be revocable the same way it was granted, so it goes through
      * enrol_adele — the same instance reconcile_host_user() manages from the
-     * live event path in sync_host_access_for_node_enrolment(), keeping the
-     * one-time activity-save sweep and the ongoing observer consistent.
+     * live event path in sync_host_access_for_node_enrolment().
      * $mode (requirement mod_adele #22) lets a teacher scale that access back
      * (visible/hidden/none) instead of it always being an active enrolment.
      * Falls back to enrol_manual only when enrol_adele is not installed
      * (L-Q-08), in which case $mode has no effect — enrol_manual has no
      * concept of a suspended-but-visible or skipped enrolment here.
      * $learningpathid is required to take the enrol_adele path.
+     *
+     * As of the E-16 fix, neither of this class's own sweep methods call this
+     * directly any more — they route through sync_host_access_for_node_enrolment()
+     * instead, so that a shared host-course instance always reflects every
+     * embedding's aggregate decision rather than whichever one happened to
+     * run last. Kept as public API for callers that genuinely want to
+     * reconcile a single, already-known embedding without that aggregation
+     * (e.g. a possible future admin action targeting one specific embedding).
      *
      * @param base $data
      * @param object $user

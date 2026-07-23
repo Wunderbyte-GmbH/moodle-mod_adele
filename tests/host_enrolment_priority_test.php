@@ -146,4 +146,107 @@ final class host_enrolment_priority_test extends advanced_testcase {
         ]);
         $this->assertCount(1, $allinstances);
     }
+
+    /**
+     * Requirement E-16: the one-time activity-save sweep must aggregate
+     * across sibling embeddings the same way the live observer does, not
+     * just apply its own embedding's mode in isolation. Simulates a teacher
+     * saving the generous embedding first, then the narrow one — the sweep
+     * for the SECOND (narrow) save must not downgrade the access the first
+     * (generous) one already granted.
+     *
+     * @covers \mod_adele_observer::enroll_any_nodes_participants
+     * @covers \mod_adele_observer::enroll_starting_nodes_participants
+     */
+    public function test_sweep_aggregates_across_sibling_embeddings(): void {
+        global $DB;
+        if (!class_exists('\enrol_adele\local\reconciler') || !class_exists('\local_adele\enrol_state')) {
+            $this->markTestSkipped('enrol_adele and local_adele are required for this test.');
+        }
+
+        $host = $this->getDataGenerator()->create_course();
+        $nodecourse = $this->getDataGenerator()->create_course();
+        $user = $this->getDataGenerator()->create_user();
+
+        $lpid = $DB->insert_record('local_adele_learning_paths', (object) [
+            'name' => 'Sweep-Testpfad',
+            'description' => '',
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'createdby' => $user->id,
+            'json' => json_encode([
+                'tree' => [
+                    'nodes' => [[
+                        'id' => 'dndnode_1',
+                        'type' => 'courseNode',
+                        'parentCourse' => ['starting_node'],
+                        'data' => ['course_node_id' => [(int) $nodecourse->id]],
+                    ]],
+                    'edges' => [],
+                ],
+            ]),
+        ]);
+
+        // Enrol into the node course BEFORE either embedding exists, so the
+        // live observer (also triggered by this call) has nothing to act on
+        // yet — isolates this test to the sweep methods called explicitly
+        // below, rather than the already-covered live-aggregation path.
+        $this->getDataGenerator()->enrol_user($user->id, $nodecourse->id, 'student', 'manual');
+
+        $narrowid = $DB->insert_record('adele', (object) [
+            'course' => $host->id,
+            'name' => 'Embedding schmal',
+            'intro' => '',
+            'introformat' => 1,
+            'learningpathid' => $lpid,
+            'participantslist' => '2',
+            'hostenrolmentmode' => 'none',
+            'userlist' => 1,
+            'view' => 1,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        $narrow = $DB->get_record('adele', ['id' => $narrowid]);
+
+        $generousid = $DB->insert_record('adele', (object) [
+            'course' => $host->id,
+            'name' => 'Embedding grosszuegig',
+            'intro' => '',
+            'introformat' => 1,
+            'learningpathid' => $lpid,
+            'participantslist' => '3',
+            'hostenrolmentmode' => 'visible',
+            'userlist' => 1,
+            'view' => 1,
+            'timecreated' => time(),
+            'timemodified' => time(),
+        ]);
+        $generous = $DB->get_record('adele', ['id' => $generousid]);
+
+        $actor = (object) ['userid' => 2];
+
+        // Simulate saving the generous embedding first.
+        \mod_adele_observer::enroll_any_nodes_participants($generous, $actor);
+
+        $instance = $DB->get_record('enrol', [
+            'enrol' => 'adele',
+            'courseid' => $host->id,
+            'customint1' => $lpid,
+            'customint2' => \enrol_adele\local\instance_manager::KIND_HOST,
+        ]);
+        $this->assertNotFalse($instance);
+        $ue = $DB->get_record('user_enrolments', ['enrolid' => $instance->id, 'userid' => $user->id]);
+        $this->assertNotFalse($ue);
+        $this->assertEquals(ENROL_USER_ACTIVE, $ue->status, 'The generous sweep should have granted active access.');
+
+        // Now simulate saving the narrow (mode 'none') embedding afterwards.
+        \mod_adele_observer::enroll_starting_nodes_participants($narrow, $actor);
+
+        $ue = $DB->get_record('user_enrolments', ['enrolid' => $instance->id, 'userid' => $user->id]);
+        $this->assertEquals(
+            ENROL_USER_ACTIVE,
+            $ue->status,
+            'The later, narrower sweep must not downgrade access the generous sibling embedding already granted.'
+        );
+    }
 }
