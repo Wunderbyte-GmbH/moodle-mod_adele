@@ -61,8 +61,8 @@ final class backup_restore_test extends advanced_testcase {
             'name' => 'Test Adele Activity',
             'learningpathid' => 1,
             'view' => 1,
-            'userlist' => 0,
-            'participantslist' => '0',
+            'userlist' => 1,
+            'participantslist' => [1],
             'intro' => 'Test intro',
             'introformat' => FORMAT_HTML,
         ]);
