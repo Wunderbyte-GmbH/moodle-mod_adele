@@ -35,6 +35,7 @@ $string['adelesettings'] = 'Learning path Settings';
 $string['completionlearningpathfinished'] = 'Learningpath completion';
 $string['completionlearningpathfinished:desc'] = 'Activity completion will be triggered if learning path is finished';
 $string['learningpathdeleted'] = 'The learning path this activity embedded has been deleted.';
+$string['mform_no_learningpath_permission'] = 'You do not have permission to select a learning path. Become an editor of a learning path, or create one, to be able to choose it here.';
 $string['mform_options_create_learningpath'] = 'Create learning path';
 $string['mform_options_hostenrolmentmode_hidden'] = 'Hidden (enrolled but no access)';
 $string['mform_options_hostenrolmentmode_none'] = 'None (no enrolment here at all)';
