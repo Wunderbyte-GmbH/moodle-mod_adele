@@ -26,10 +26,17 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_adele';
 $plugin->supported = [405, 502];
-$plugin->release = '0.1.11';
-$plugin->version = 2026072400;
+$plugin->release = '0.1.12';
+$plugin->version = 2026072401;
 $plugin->requires = 2024100700;
 $plugin->maturity = MATURITY_ALPHA;
+// Fix G.2 (Session 003, Teil 1): mod_adele's code genuinely calls
+// enrol_adele\local\reconciler (reconcile_host_user(), purge_all_host_user()
+// etc.) — this was a real, undeclared dependency. Completes the target
+// dependency graph already decided in G-Q1: local_adele (base) <-
+// enrol_adele <- mod_adele. Deliberately does NOT create a cycle: enrol_adele
+// does not (and per G-Q1 must not) declare a dependency back on mod_adele.
 $plugin->dependencies = [
     'local_adele' => 2026072301,
+    'enrol_adele' => 2026072305,
 ];

@@ -314,6 +314,21 @@ class mod_adele_observer {
      * @param string $option '2' (starting node) or '3' (any node).
      * @return bool
      */
+    /**
+     * Whether the user is entitled to host-course access via the given option.
+     *
+     * Fix G.4/G.11 (Session 003): now excludes enrol_adele's own enrolments
+     * (matching the revocation-side check in
+     * enrol_adele\observer::has_foreign_enrolment()/is_user_carried() —
+     * "otherwise access would keep itself alive circularly") and checks
+     * timestart/timeend/enrol-instance-status, so a grant and its later
+     * revocation are decided by the same definition of "carries the user".
+     *
+     * @param object $learningpath The learning path record.
+     * @param int $userid The user id.
+     * @param string $option '2' (starting node) or '3' (any node).
+     * @return bool
+     */
     private static function is_user_entitled_to_host_via_option($learningpath, int $userid, string $option): bool {
         global $DB;
         $json = is_string($learningpath->json) ? json_decode($learningpath->json, true) : $learningpath->json;
@@ -332,12 +347,22 @@ class mod_adele_observer {
             return false;
         }
         [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        $now = time();
         $sql = "SELECT 1
                   FROM {user_enrolments} ue
                   JOIN {enrol} e ON e.id = ue.enrolid
                  WHERE ue.userid = :userid
+                       AND e.enrol <> 'adele'
+                       AND e.status = :enabled
+                       AND (ue.timestart = 0 OR ue.timestart <= :now1)
+                       AND (ue.timeend = 0 OR ue.timeend > :now2)
                        AND e.courseid {$insql}";
-        return $DB->record_exists_sql($sql, ['userid' => $userid] + $inparams);
+        return $DB->record_exists_sql($sql, [
+            'userid' => $userid,
+            'enabled' => ENROL_INSTANCE_ENABLED,
+            'now1' => $now,
+            'now2' => $now,
+        ] + $inparams);
     }
 
     /**

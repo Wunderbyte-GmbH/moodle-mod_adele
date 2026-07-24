@@ -34,6 +34,7 @@ $string['adelename_help'] = 'Hilfe für Lernpfad';
 $string['adelesettings'] = 'Lernpfad Einstellungen';
 $string['completionlearningpathfinished'] = 'Lernpfadabschluss';
 $string['completionlearningpathfinished:desc'] = 'Aktivität wird abgeschlossen wenn Lernpfad beendet wird';
+$string['learningpathdeleted'] = 'Der Lernpfad, den diese Aktivität eingebettet hat, wurde gelöscht.';
 $string['mform_options_create_learningpath'] = 'Erstelle Lernpfad';
 $string['mform_options_hostenrolmentmode_hidden'] = 'Verdeckt (eingeschrieben, aber kein Zugriff)';
 $string['mform_options_hostenrolmentmode_none'] = 'Keine (hier gar keine Einschreibung)';
