@@ -74,6 +74,16 @@ function adele_add_instance($moduleinstance, $mform = null) {
 
     $id = $DB->insert_record('adele', $moduleinstance);
 
+    // Fix G.2 full solution (Session 003): keep local_adele's host-course
+    // index in sync, so enrol_adele can read it instead of this table
+    // directly.
+    \local_adele\enrol_state::sync_host_course_index(
+        (int) $id,
+        (int) $moduleinstance->learningpathid,
+        (int) $moduleinstance->course,
+        $moduleinstance->participantslist
+    );
+
     return $id;
 }
 
@@ -101,7 +111,22 @@ function adele_update_instance($moduleinstance, $mform = null) {
     $moduleinstance->completionlearningpathfinished =
         isset($moduleinstance->completionlearningpathfinished) ? $moduleinstance->completionlearningpathfinished : 0;
 
-    return $DB->update_record('adele', $moduleinstance);
+    $result = $DB->update_record('adele', $moduleinstance);
+
+    // Fix G.2 full solution (Session 003): keep local_adele's host-course
+    // index in sync. $moduleinstance->course is not guaranteed to be
+    // present on every code path that reaches an update (some callers
+    // build a partial object) - fall back to the stored value rather than
+    // write a wrong/zero courseid into the index.
+    $courseid = $moduleinstance->course ?? $DB->get_field('adele', 'course', ['id' => $moduleinstance->id]);
+    \local_adele\enrol_state::sync_host_course_index(
+        (int) $moduleinstance->id,
+        (int) $moduleinstance->learningpathid,
+        (int) $courseid,
+        $moduleinstance->participantslist
+    );
+
+    return $result;
 }
 
 /**
@@ -119,6 +144,10 @@ function adele_delete_instance($id) {
     }
 
     $DB->delete_records('adele', ['id' => $id]);
+
+    // Fix G.2 full solution (Session 003): keep local_adele's host-course
+    // index in sync.
+    \local_adele\enrol_state::remove_host_course_index((int) $id);
 
     return true;
 }

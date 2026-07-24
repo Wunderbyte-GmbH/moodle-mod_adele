@@ -23,9 +23,16 @@ jobs:
       # local_adele 0.4.3 specifically (enrol_adele project, Session 001,
       # Teil 3/4), and both plugins are co-developed on the "development"
       # branch of the ralferlebach fork.
+      #
+      # enrol_adele added (Session 003, Teil 11): mod_adele/version.php has
+      # declared a real dependency on it since G.2 (Teil 7) — mod_adele's
+      # own observer code genuinely calls enrol_adele\local\reconciler
+      # directly (reconcile_host_user() etc.), so CI needs it installed to
+      # even reach mod_adele's own tests, not just to satisfy version.php.
       extra_plugin_runners: |
         moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
-        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle_local_adele
+        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle-local_adele
+        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle-enrol_adele
       #   moodle-plugin-ci add-plugin --branch master branchup/moodle-filter_shortcodes
       #   moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-tool_mocktesttime
 
@@ -81,7 +88,8 @@ jobs:
 
       extra_plugin_runners: |
         moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
-        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle_local_adele
+        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle-local_adele
+        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle-enrol_adele
 
       enable_phpmd: true
 

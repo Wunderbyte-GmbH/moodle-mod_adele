@@ -70,6 +70,21 @@ $learningpath = $DB->get_record(
 
 echo $OUTPUT->header();
 
+// Fix G.13 (Session 003): local_adele does not (yet) prevent deleting a
+// learning path that is still embedded here, nor does it migrate/flag
+// affected activities (see arbeitsplan.md, issue
+// mod_adele-issue-orphaned-activities-on-lp-delete.md for the larger,
+// still-open design question of blocking deletion vs. a soft-delete
+// status). This is the minimal fix in the meantime: show a clear message
+// instead of proceeding into template rendering and external-function
+// calls that would silently fail against a learning path id that no
+// longer exists.
+if ($learningpath->learningpathid && !$DB->record_exists('local_adele_learning_paths', ['id' => $learningpath->learningpathid])) {
+    echo $OUTPUT->notification(get_string('learningpathdeleted', 'mod_adele'), 'notifyproblem');
+    echo $OUTPUT->footer();
+    exit;
+}
+
 // Early bail out conditions.
 if (
     isloggedin() &&
@@ -94,13 +109,12 @@ if (
                 ]
             );
         } else {
-            echo <<<EOT
-                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
-                    padding: 15px; margin-bottom: 20px; color: #721c24;">
-                    <i class="fas fa-exclamation-circle" style="color: #721c24; margin-right: 10px;"></i>
-                    <strong>{$alisecompatible['msg']}</strong>
-                </div>
-            EOT;
+            // Fix G.17 (Session 003): the message used to be interpolated
+            // into raw HTML unescaped. No known attacker-controlled source
+            // feeds this today, but the pattern itself was an XSS risk
+            // waiting to happen, and bypassed Moodle's own notification
+            // styling/output API for no reason.
+            echo $OUTPUT->notification(s($alisecompatible['msg']), 'notifyproblem');
         }
     } else if (has_capability('mod/adele:readinstance', $modulecontext)) {
         if ($alisecompatible['alisecompatible']) {
@@ -118,13 +132,12 @@ if (
                 ]
             );
         } else {
-            echo <<<EOT
-                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
-                    padding: 15px; margin-bottom: 20px; color: #721c24;">
-                    <i class="fas fa-exclamation-circle" style="color: #721c24; margin-right: 10px;"></i>
-                    <strong>{$alisecompatible['msg']}</strong>
-                </div>
-            EOT;
+            // Fix G.17 (Session 003): the message used to be interpolated
+            // into raw HTML unescaped. No known attacker-controlled source
+            // feeds this today, but the pattern itself was an XSS risk
+            // waiting to happen, and bypassed Moodle's own notification
+            // styling/output API for no reason.
+            echo $OUTPUT->notification(s($alisecompatible['msg']), 'notifyproblem');
         }
     }
 }

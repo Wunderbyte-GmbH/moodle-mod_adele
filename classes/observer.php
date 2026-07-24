@@ -158,10 +158,13 @@ class mod_adele_observer {
      * state rather than trusting the single event that triggered the call: a
      * node course can be shared by several nodes, and a user can hold several
      * concurrent node-course enrolments, so only a fresh read is race-safe.
-     * No-op when enrol_adele is not installed (L-Q-08) — without it there is
-     * no revocable host-course mechanism to drive, and the one-time sweep in
-     * enroll_starting_nodes_participants()/enroll_any_nodes_participants()
-     * (still enrol_manual in that case) remains the only host-course trigger.
+     * Warns clearly via local_adele\enrol_state::warn_enrol_adele_missing()
+     * instead of silently no-op'ing when enrol_adele is not installed
+     * (decision G-Q1a, Session 003, revokes L-Q-08) — since the E-16 fix,
+     * this is also the only host-course trigger for the sweep methods
+     * (enroll_starting_nodes_participants()/enroll_any_nodes_participants()
+     * now route through here too via a synthetic event, so the earlier note
+     * about them falling back to enrol_manual no longer applies).
      *
      * Requirement mod_adele #23: several embeddings can target the SAME
      * (learning path, host course) pair — one enrol_adele host instance is
@@ -183,6 +186,7 @@ class mod_adele_observer {
     private static function sync_host_access_for_node_enrolment($data): void {
         global $DB;
         if (!class_exists('\enrol_adele\local\reconciler')) {
+            \local_adele\enrol_state::warn_enrol_adele_missing();
             return;
         }
         $userid = (int) $data->relateduserid;
@@ -310,6 +314,21 @@ class mod_adele_observer {
      * @param string $option '2' (starting node) or '3' (any node).
      * @return bool
      */
+    /**
+     * Whether the user is entitled to host-course access via the given option.
+     *
+     * Fix G.4/G.11 (Session 003): now excludes enrol_adele's own enrolments
+     * (matching the revocation-side check in
+     * enrol_adele\observer::has_foreign_enrolment()/is_user_carried() —
+     * "otherwise access would keep itself alive circularly") and checks
+     * timestart/timeend/enrol-instance-status, so a grant and its later
+     * revocation are decided by the same definition of "carries the user".
+     *
+     * @param object $learningpath The learning path record.
+     * @param int $userid The user id.
+     * @param string $option '2' (starting node) or '3' (any node).
+     * @return bool
+     */
     private static function is_user_entitled_to_host_via_option($learningpath, int $userid, string $option): bool {
         global $DB;
         $json = is_string($learningpath->json) ? json_decode($learningpath->json, true) : $learningpath->json;
@@ -328,12 +347,22 @@ class mod_adele_observer {
             return false;
         }
         [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        $now = time();
         $sql = "SELECT 1
                   FROM {user_enrolments} ue
                   JOIN {enrol} e ON e.id = ue.enrolid
                  WHERE ue.userid = :userid
+                       AND e.enrol <> 'adele'
+                       AND e.status = :enabled
+                       AND (ue.timestart = 0 OR ue.timestart <= :now1)
+                       AND (ue.timeend = 0 OR ue.timeend > :now2)
                        AND e.courseid {$insql}";
-        return $DB->record_exists_sql($sql, ['userid' => $userid] + $inparams);
+        return $DB->record_exists_sql($sql, [
+            'userid' => $userid,
+            'enabled' => ENROL_INSTANCE_ENABLED,
+            'now1' => $now,
+            'now2' => $now,
+        ] + $inparams);
     }
 
     /**
@@ -456,9 +485,11 @@ class mod_adele_observer {
      * live event path in sync_host_access_for_node_enrolment().
      * $mode (requirement mod_adele #22) lets a teacher scale that access back
      * (visible/hidden/none) instead of it always being an active enrolment.
-     * Falls back to enrol_manual only when enrol_adele is not installed
-     * (L-Q-08), in which case $mode has no effect — enrol_manual has no
-     * concept of a suspended-but-visible or skipped enrolment here.
+     * Warns clearly via local_adele\enrol_state::warn_enrol_adele_missing()
+     * instead of falling back to enrol_manual when enrol_adele is not
+     * installed (decision G-Q1a, Session 003, revokes L-Q-08) — no host-course
+     * enrolment happens at all in that case, since enrol_manual has no concept
+     * of a suspended-but-visible or skipped enrolment matching $mode anyway.
      * $learningpathid is required to take the enrol_adele path.
      *
      * As of the E-16 fix, neither of this class's own sweep methods call this
@@ -475,7 +506,6 @@ class mod_adele_observer {
      * @param string $mode One of enrol_adele\local\reconciler::MODE_* (defaults to visible).
      */
     public static function subscribe_user_course($data, $user, $learningpathid = null, $mode = 'visible') {
-        global $DB;
         if ($learningpathid !== null && class_exists('\enrol_adele\local\reconciler')) {
             \enrol_adele\local\reconciler::reconcile_host_user(
                 (int) $learningpathid,
@@ -486,22 +516,6 @@ class mod_adele_observer {
             );
             return;
         }
-        if (enrol_is_enabled('manual') && $enrol = enrol_get_plugin('manual')) {
-            $instances = $DB->get_records(
-                'enrol',
-                ['enrol' => 'manual', 'courseid' => $data->courseid, 'status' => ENROL_INSTANCE_ENABLED],
-                'sortorder,id ASC'
-            );
-            if ($instances) {
-                $context = context_course::instance($data->courseid);
-
-                $isenrolled = is_enrolled($context, $user->id);
-                if (!$isenrolled) {
-                    $instance = reset($instances); // Use the first manual enrolment plugin in the course.
-                    $selectedrole = get_config('local_adele', 'enroll_as_setting');
-                    $enrol->enrol_user($instance, $user->id, $selectedrole);
-                }
-            }
-        }
+        \local_adele\enrol_state::warn_enrol_adele_missing();
     }
 }
