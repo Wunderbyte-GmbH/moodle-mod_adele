@@ -18,7 +18,8 @@
  * Contains function with the definition of upgrade steps for the plugin.
  *
  * @package   mod_adele
- * @copyright 2024 Wunderbyte
+ * @copyright 2024 Wunderbyte GmbH <info@wunderbyte.at>
+ * @copyright 2026 Ralf Erlebach
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -65,11 +66,11 @@ function xmldb_adele_upgrade($oldversion) {
     }
 
     if ($oldversion < 2026072301) {
-        // Requirement mod_adele #22: teachers can now scale back what
+        // Adds hostenrolmentmode so teachers can scale back what
         // participantslist options 2/3 grant in the host course (visible /
-        // hidden / no enrolment at all) instead of always enrolling actively.
-        // Default 'visible' preserves existing behaviour for every activity
-        // that predates this setting.
+        // hidden / no enrolment) instead of always enrolling actively.
+        // Default 'visible' preserves existing behaviour for activities that
+        // predate this setting.
         $table = new xmldb_table('adele');
         $field = new xmldb_field(
             'hostenrolmentmode',

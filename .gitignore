@@ -26,9 +26,6 @@ yarn.lock
 vendor/
 composer.lock
 
-# AMD build artefacts (keep src, ignore build output)
-amd/build/
-
 # moodle-plugin-ci working directories
 ci/
 moodle/

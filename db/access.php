@@ -15,12 +15,12 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Adele capabilities definition
+ * Capability definitions for mod_adele.
  *
  * @package    mod_adele
- * @subpackage adele
  * @category   access
- * @copyright  2024 onwards Remote-Learner {@link http://www.remote-learner.ca/}
+ * @copyright  2024 Wunderbyte GmbH <info@wunderbyte.at>
+ * @copyright  2026 Ralf Erlebach
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
