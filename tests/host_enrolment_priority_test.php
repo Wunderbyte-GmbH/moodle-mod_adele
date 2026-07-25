@@ -16,7 +16,7 @@
 
 /**
  * Test for the host-course aggregation rule when several embeddings of the
- * same learning path target the same host course (requirement mod_adele #23).
+ * same learning path target the same host course.
  *
  * @package mod_adele
  * @copyright 2026 Ralf Erlebach
@@ -148,9 +148,9 @@ final class host_enrolment_priority_test extends advanced_testcase {
     }
 
     /**
-     * Requirement E-16: the one-time activity-save sweep must aggregate
-     * across sibling embeddings the same way the live observer does, not
-     * just apply its own embedding's mode in isolation. Simulates a teacher
+     * The one-time activity-save sweep must aggregate across sibling
+     * embeddings the same way the live observer does, not just apply its own
+     * embedding's mode in isolation. Simulates a teacher
      * saving the generous embedding first, then the narrow one — the sweep
      * for the SECOND (narrow) save must not downgrade the access the first
      * (generous) one already granted.

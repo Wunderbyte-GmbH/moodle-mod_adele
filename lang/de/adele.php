@@ -20,6 +20,7 @@
  * @package     mod_adele
  * @category    string
  * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
+ * @copyright   2026 Ralf Erlebach
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -34,27 +35,30 @@ $string['adelename_help'] = 'Hilfe für Lernpfad';
 $string['adelesettings'] = 'Lernpfad Einstellungen';
 $string['completionlearningpathfinished'] = 'Lernpfadabschluss';
 $string['completionlearningpathfinished:desc'] = 'Aktivität wird abgeschlossen wenn Lernpfad beendet wird';
+$string['error_adaptivequiz_mismatch'] = 'Der adaptive Test im Kurs passt nicht zu dem im Lernpfad referenzierten Test.';
+$string['error_diverse_scales'] = 'Es wurden unterschiedliche Skalen referenziert. Bitte korrigieren.';
+$string['error_multiple_adaptivequiz'] = 'Es wurde mehr als ein adaptiver Test im Kurs gefunden. Bei Nutzung eines Lernpfads ist nur einer erlaubt.';
 $string['learningpathdeleted'] = 'Der Lernpfad, den diese Aktivität eingebettet hat, wurde gelöscht.';
-$string['mform_options_create_learningpath'] = 'Erstelle Lernpfad';
-$string['mform_options_hostenrolmentmode_hidden'] = 'Verdeckt (eingeschrieben, aber kein Zugriff)';
-$string['mform_options_hostenrolmentmode_none'] = 'Keine (hier gar keine Einschreibung)';
-$string['mform_options_hostenrolmentmode_visible'] = 'Sichtbar (Zugang für den/die Lernende/n)';
+$string['mform_options_create_learningpath'] = 'Neuen Lernpfad erstellen';
+$string['mform_options_hostenrolmentmode_hidden'] = 'verdeckt (als deaktivierte Einschreibung)';
+$string['mform_options_hostenrolmentmode_none'] = 'keine Einschreibung vornehmen';
+$string['mform_options_hostenrolmentmode_visible'] = 'automatisch (mit vollem Zugriff für Teilnehmende)';
 $string['mform_options_link_create_learningpath'] = 'Link zur Erstellung eines Lernpfades';
 $string['mform_options_no_selection'] = 'Keine Auswahl';
-$string['mform_options_participantslist_all_courses'] = 'Alle, die in irgendeinem Knoten-Kurs des Lernpfads eingeschrieben sind';
-$string['mform_options_participantslist_starting_courses'] = 'Jeder ist eingeschrieben, der in einem Startknoten ist';
-$string['mform_options_participantslist_this_course'] = 'Jeder, der für diesen Kurs eingeschrieben ist';
+$string['mform_options_participantslist_all_courses'] = 'für in einem beliebigen Kurs des Lernpfades eingeschriebene Personen';
+$string['mform_options_participantslist_starting_courses'] = 'für in Startknoten eingeschriebene Personen';
+$string['mform_options_participantslist_this_course'] = 'für in diesem Kurs eingeschriebene Personen';
 $string['mform_options_required'] = 'notwendig';
-$string['mform_options_userlist_all'] = 'Jeder sieht eine Übersicht aller eingeschriebenen Teilnehmerergebnisse';
-$string['mform_options_userlist_only'] = 'Jeder sieht nur seine eigenen Ergebnisse';
-$string['mform_options_view_floor_level'] = 'Lernpfad auf unterster Ebene anzeigen';
-$string['mform_options_view_top_level'] = 'Lernpfad auf oberster Ebene anzeigen';
-$string['mform_select_hostenrolmentmode'] = 'Host-Kurs-Zugang bei „Startnode"/„irgendeine Node"';
-$string['mform_select_hostenrolmentmode_help'] = 'Nur relevant für die Teilnehmeroptionen 2 („Startnode") und 3 („irgendeine Node") oben — Option 1 schreibt immer aktiv in diesen Kurs ein. Sichtbar: Der/die Lernende wird aktiv eingeschrieben und kann den Kurs betreten. Verdeckt: Eine Einschreibung wird angelegt (in der Teilnehmerliste sichtbar, für Berichte/Zertifikate zählbar), gewährt aber keinen Zugriff. Keine: Hier entsteht gar keine Einschreibung — nur die Lernpfad-Subscription selbst erfolgt.';
+$string['mform_options_userlist_all'] = 'Ergebnisse aller anderer Teilnehmer';
+$string['mform_options_userlist_only'] = 'nur eigene Ergebnisse';
+$string['mform_options_view_floor_level'] = 'innerhalb der Aktivität';
+$string['mform_options_view_top_level'] = 'direkt auf Kursebene';
+$string['mform_select_hostenrolmentmode'] = 'Einschreibung in diesem Kurs';
+$string['mform_select_hostenrolmentmode_help'] = 'Nur relevant für die Teilnehmeroptionen „für in Startknoten eingeschriebene Personen" und „für in einem beliebigen Kurs des Lernpfades eingeschriebene Personen" — die Option „für in diesem Kurs eingeschriebene Personen" schreibt immer aktiv in diesen Kurs ein. Automatisch: Die Person wird aktiv eingeschrieben und kann den Kurs betreten. Verdeckt: Eine Einschreibung wird angelegt (in der Teilnehmerliste sichtbar, für Berichte/Zertifikate zählbar), gewährt aber keinen Zugriff. Keine Einschreibung: Hier entsteht keine Einschreibung — nur die Lernpfad-Zuordnung selbst erfolgt.';
 $string['mform_select_learningpath'] = 'Gewählter Lernpfad';
-$string['mform_select_participantslist'] = 'Eine Option auswählen, wie Personen für den Lernpfad abonniert werden';
-$string['mform_select_userlist'] = 'Benutzerlistenoption auswählen';
-$string['mform_select_view'] = 'Ansicht auswählen';
+$string['mform_select_participantslist'] = 'Lernpfadeinschreibung';
+$string['mform_select_userlist'] = 'Teilnehmer sehen';
+$string['mform_select_view'] = 'Lernpfad anzeigen';
 $string['mod/adele:seelearningpath'] = 'Kann Lernpfade sehen';
 $string['modulename'] = 'Lernpfad';
 $string['modulenameplural'] = 'Lernpfade';

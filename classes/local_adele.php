@@ -15,39 +15,43 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Entities Class to display list of entity records.
+ * Helper for resolving the internal adaptive-quiz scale a learning path
+ * expects and checking it against the quizzes present in a course.
  *
  * @package     mod_adele
  * @author      Jacob Viertel
  * @copyright  2024 Wunderbyte GmbH
+ * @copyright  2026 Ralf Erlebach
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_adele;
 
 /**
- * Class learning_paths
+ * Class local_adele.
  *
  * @package     mod_adele
  * @author      Jacob Viertel
  * @copyright  2024 Wunderbyte GmbH
+ * @copyright  2026 Ralf Erlebach
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class local_adele {
     /**
-     * Entities constructor.
+     * Constructor.
      */
     public function __construct() {
     }
 
     /**
-     * Get all tests.
+     * Resolve the internal catquiz scale referenced by a learning path and
+     * check it against the adaptive quizzes present in the given course.
      *
      * @param string $learningpathid The ID of the learning path.
      * @param string $courseid       The ID of the course.
-     * @return array
+     * @return array Result with keys 'alisecompatible' (bool) and 'msg' (string).
      */
-    public static function get_internalquuiz_id($learningpathid, $courseid) {
+    public static function get_internal_quiz_id($learningpathid, $courseid) {
         global $DB;
         $internalcatquizid = null;
         $alisecompatible = [
@@ -74,7 +78,7 @@ class local_adele {
                                 $completionnode->data->value->testid == '0'
                             ) {
                                 if ($internalcatquizid && $internalcatquizid != $completionnode->data->value->parentscales) {
-                                    $alisecompatible['msg'] = 'Diverse scales were refferecned. Please fix this.';
+                                    $alisecompatible['msg'] = get_string('error_diverse_scales', 'mod_adele');
                                     $internalcatquizid = 0;
                                     break;
                                 }
@@ -98,11 +102,12 @@ class local_adele {
     }
 
     /**
-     * Get all tests.
+     * Check that the course contains exactly one adaptive quiz and that it
+     * uses the scale expected by the learning path.
      *
-     * @param string $internalcatquizid The ID of the internal catquiz.
+     * @param string $internalcatquizid The ID of the internal catquiz scale.
      * @param string $courseid          The ID of the course.
-     * @return array
+     * @return array Result with keys 'alisecompatible' (bool) and 'msg' (string).
      */
     public static function get_alise_compability($internalcatquizid, $courseid) {
         global $DB;
@@ -123,8 +128,7 @@ class local_adele {
                     if (empty($adaptivetest) || $adaptivetest->catscaleid != $internalcatquizid) {
                         $alisecompatible = [
                           'alisecompatible' => false,
-                          'msg' => 'Mismatch between adaptive quiz inside the course and the one
-                          that is reffered inside the learning path.',
+                          'msg' => get_string('error_adaptivequiz_mismatch', 'mod_adele'),
                         ];
                     }
                     $alisecount++;
@@ -133,7 +137,7 @@ class local_adele {
             if ($alisecount > 1 && $alisecompatible) {
                 $alisecompatible = [
                   'alisecompatible' => false,
-                  'msg' => 'Found more than one adaptive quiz inside course. Only one is allowed if learning path should be used.',
+                  'msg' => get_string('error_multiple_adaptivequiz', 'mod_adele'),
                 ];
             }
         }

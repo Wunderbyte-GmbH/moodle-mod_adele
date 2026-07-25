@@ -19,6 +19,7 @@
  *
  * @package mod_adele
  * @copyright 2024 Georg Maißer <info@wunderbyte.at>
+ * @copyright 2026 Ralf Erlebach
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -31,10 +32,9 @@ use local_adele\learning_paths;
  */
 class mod_adele_observer {
     /**
-     * Check whether the local_adele classes this observer relies on exist.
+     * Whether the local_adele classes this observer depends on are loaded.
      *
-     * Ported from the ralferlebach-fix-enrolment-issue branch: keeps the module
-     * from fataling when local_adele is missing or being upgraded.
+     * Prevents fatal errors when local_adele is missing or mid-upgrade.
      *
      * @return bool
      */
@@ -44,10 +44,10 @@ class mod_adele_observer {
     }
 
     /**
-     * Observer for changes inside the module.
-     * We check if the module is a adele mod.
-     * We check if something was changed, if possible.
-     * We enroll the users that meet the criteria into the course.
+     * Observer for course_module_updated/created events.
+     *
+     * Checks whether the affected module is an adele instance and, if so,
+     * enrols the users that meet each configured subscription option.
      *
      * @param base $data
      * @return base
@@ -109,10 +109,9 @@ class mod_adele_observer {
                     if (!$adelelp) {
                         continue;
                     }
-                    // The stored value is a comma list ('1', '2', '1,2', ...): explode
-                    // before comparing. The former raw comparison ($participantslist
-                    // == '1') silently skipped the subscription whenever more than
-                    // one option was selected (fix A-14).
+                    // The stored value is a comma list ('1', '2', '1,2', ...); explode
+                    // before comparing, since a raw string comparison would silently
+                    // skip the subscription whenever more than one option is selected.
                     $options = explode(',', (string) $adelelp->participantslist);
                     if (in_array('1', $options)) {
                         // Subscribe user to learning path.
@@ -132,12 +131,12 @@ class mod_adele_observer {
      * Observer for user_enrolment_deleted.
      *
      * Options 2/3 grant host-course access as a CONSEQUENCE of node-course
-     * membership; losing that membership must be reflected the same way
-     * losing it is granted — live, not only re-evaluated the next time the
-     * activity is saved. Option 1 is intentionally NOT handled here: a host
-     * course enrolment lost through option 1 is the trigger enrol_adele's own
-     * observer (requirement A-4) already reacts to on the target-course side;
-     * this observer only concerns the host-course consequence of options 2/3.
+     * membership; losing that membership must be reflected the same way it
+     * is granted — live, not only re-evaluated the next time the activity is
+     * saved. Option 1 is intentionally NOT handled here: a host course
+     * enrolment lost through option 1 is already the trigger enrol_adele's
+     * own observer reacts to on the target-course side; this observer only
+     * concerns the host-course consequence of options 2/3.
      *
      * @param base $data
      * @return base
@@ -159,26 +158,25 @@ class mod_adele_observer {
      * node course can be shared by several nodes, and a user can hold several
      * concurrent node-course enrolments, so only a fresh read is race-safe.
      * Warns clearly via local_adele\enrol_state::warn_enrol_adele_missing()
-     * instead of silently no-op'ing when enrol_adele is not installed
-     * (decision G-Q1a, Session 003, revokes L-Q-08) — since the E-16 fix,
-     * this is also the only host-course trigger for the sweep methods
+     * instead of silently no-op'ing when enrol_adele is not installed. This
+     * is also the only host-course trigger for the sweep methods
      * (enroll_starting_nodes_participants()/enroll_any_nodes_participants()
-     * now route through here too via a synthetic event, so the earlier note
-     * about them falling back to enrol_manual no longer applies).
+     * route through here too via a synthetic event, so neither falls back to
+     * enrol_manual).
      *
-     * Requirement mod_adele #23: several embeddings can target the SAME
-     * (learning path, host course) pair — one enrol_adele host instance is
-     * shared between them (its identity does not include the mod_adele
-     * activity id). Every embedding's (entitled, mode) is therefore computed
-     * FIRST and grouped by that pair; only ONE reconcile_host_user() call is
-     * made per group, on the aggregated result — never one call per
-     * embedding overwriting whatever the previous one decided. The
-     * aggregation rule is "most generous option wins": entitled is the union
-     * across the group (any embedding granting access is enough), and the
-     * visibility mode is the most permissive one among the embeddings that
-     * actually granted it (visible > hidden > none) — consistent with the
-     * pre-existing target-course rule that a shared course stays accessible
-     * as long as any node still grants it (decision F-1/A-6).
+     * Several embeddings can target the SAME (learning path, host course)
+     * pair — one enrol_adele host instance is shared between them (its
+     * identity does not include the mod_adele activity id). Every
+     * embedding's (entitled, mode) is therefore computed FIRST and grouped
+     * by that pair; only ONE reconcile_host_user() call is made per group, on
+     * the aggregated result — never one call per embedding overwriting
+     * whatever the previous one decided. The aggregation rule is "most
+     * generous option wins": entitled is the union across the group (any
+     * embedding granting access is enough), and the visibility mode is the
+     * most permissive one among the embeddings that actually granted it
+     * (visible > hidden > none) — consistent with the target-course rule
+     * that a shared course stays accessible as long as any node still grants
+     * it.
      *
      * @param base $data The user_enrolment_created/deleted event data.
      * @return void
@@ -287,8 +285,8 @@ class mod_adele_observer {
     /**
      * Generosity ranking for host-course visibility modes, highest first:
      * visible > hidden > none. Used to resolve competing embeddings of the
-     * same learning path in the same host course (mod_adele #23) — the most
-     * permissive mode among the embeddings that actually grant access wins.
+     * same learning path in the same host course — the most permissive mode
+     * among the embeddings that actually grant access wins.
      *
      * @param string $mode One of enrol_adele\local\reconciler::MODE_*.
      * @return int Higher is more permissive.
@@ -305,24 +303,16 @@ class mod_adele_observer {
     }
 
     /**
-     * Whether a user currently holds ANY enrolment (any method, suspended
-     * counts — consistent with decision F-4/A-8 elsewhere in this project) in
-     * a node course qualifying under the given subscription option.
+     * Whether the user is entitled to host-course access via the given
+     * option: holds ANY enrolment (any method, suspended counts) in a node
+     * course qualifying under it.
      *
-     * @param object $learningpath The learning path (json may be string or array).
-     * @param int $userid The user id.
-     * @param string $option '2' (starting node) or '3' (any node).
-     * @return bool
-     */
-    /**
-     * Whether the user is entitled to host-course access via the given option.
-     *
-     * Fix G.4/G.11 (Session 003): now excludes enrol_adele's own enrolments
-     * (matching the revocation-side check in
-     * enrol_adele\observer::has_foreign_enrolment()/is_user_carried() —
-     * "otherwise access would keep itself alive circularly") and checks
-     * timestart/timeend/enrol-instance-status, so a grant and its later
-     * revocation are decided by the same definition of "carries the user".
+     * Excludes enrol_adele's own enrolments (matching the revocation-side
+     * check in enrol_adele\observer::has_foreign_enrolment()/
+     * is_user_carried() — otherwise access would keep itself alive
+     * circularly) and checks timestart/timeend/enrol-instance-status, so a
+     * grant and its later revocation are decided by the same definition of
+     * "carries the user".
      *
      * @param object $learningpath The learning path record.
      * @param int $userid The user id.
@@ -390,18 +380,16 @@ class mod_adele_observer {
     /**
      * Enroll all participants inside the starting nodes.
      *
-     * Requirement E-16: routes each swept user through
-     * sync_host_access_for_node_enrolment() — the SAME aggregation the live
-     * observer uses (mod_adele #23) — via a synthetic event-like object,
-     * instead of calling subscribe_user_course() directly with only this
-     * activity's own mode. Previously, saving a narrower sibling embedding
-     * (same learning path, same host course) after a more generous one could
-     * transiently downgrade access the sweep for THAT activity had no way to
-     * know about; reusing the live aggregation logic here closes that gap
-     * without duplicating it. This also folds in the learning-path
-     * subscription step (sync_host_access_for_node_enrolment() already does
-     * that when entitled), so the separate subscribe_user_to_learning_path()
-     * call below is no longer needed for the swept users.
+     * Routes each swept user through sync_host_access_for_node_enrolment() —
+     * the SAME aggregation the live observer uses — via a synthetic
+     * event-like object, instead of calling subscribe_user_course() directly
+     * with only this activity's own mode. This avoids a narrower sibling
+     * embedding (same learning path, same host course), saved after a more
+     * generous one, transiently downgrading access the sweep has no way to
+     * know about. It also folds in the learning-path subscription step
+     * (sync_host_access_for_node_enrolment() already does that when
+     * entitled), so no separate subscribe_user_to_learning_path() call is
+     * needed for the swept users.
      *
      * @param object $adelelp
      * @param base $data
@@ -433,10 +421,9 @@ class mod_adele_observer {
     /**
      * Enroll all participants inside any node of the learning path.
      *
-     * Subscription option 3, ported from the ralferlebach-fix-enrolment-issue
-     * branch: everyone enrolled in any node course of the learning path is
-     * enrolled into the host course and subscribed to the learning path. Users
-     * are deduplicated across node courses. Requirement E-16: same
+     * Subscription option 3: everyone enrolled in any node course of the
+     * learning path is enrolled into the host course and subscribed to the
+     * learning path. Users are deduplicated across node courses; same
      * aggregation-reuse rationale as enroll_starting_nodes_participants()
      * above.
      *
@@ -478,27 +465,27 @@ class mod_adele_observer {
      * Enrol a single user into the host course, without the multi-embedding
      * aggregation sync_host_access_for_node_enrolment() applies.
      *
-     * Requirement following ticket #486 (Session 001 Teil 5): for options 2/3
-     * the host-course enrolment is a CONSEQUENCE of node-course membership and
-     * must be revocable the same way it was granted, so it goes through
-     * enrol_adele — the same instance reconcile_host_user() manages from the
-     * live event path in sync_host_access_for_node_enrolment().
-     * $mode (requirement mod_adele #22) lets a teacher scale that access back
-     * (visible/hidden/none) instead of it always being an active enrolment.
-     * Warns clearly via local_adele\enrol_state::warn_enrol_adele_missing()
-     * instead of falling back to enrol_manual when enrol_adele is not
-     * installed (decision G-Q1a, Session 003, revokes L-Q-08) — no host-course
-     * enrolment happens at all in that case, since enrol_manual has no concept
-     * of a suspended-but-visible or skipped enrolment matching $mode anyway.
-     * $learningpathid is required to take the enrol_adele path.
+     * For options 2/3 the host-course enrolment is a CONSEQUENCE of
+     * node-course membership and must be revocable the same way it was
+     * granted, so it goes through enrol_adele — the same instance
+     * reconcile_host_user() manages from the live event path in
+     * sync_host_access_for_node_enrolment(). $mode lets a teacher scale that
+     * access back (visible/hidden/none) instead of it always being an active
+     * enrolment. Warns clearly via
+     * local_adele\enrol_state::warn_enrol_adele_missing() instead of falling
+     * back to enrol_manual when enrol_adele is not installed — no
+     * host-course enrolment happens at all in that case, since enrol_manual
+     * has no concept of a suspended-but-visible or skipped enrolment
+     * matching $mode anyway. $learningpathid is required to take the
+     * enrol_adele path.
      *
-     * As of the E-16 fix, neither of this class's own sweep methods call this
-     * directly any more — they route through sync_host_access_for_node_enrolment()
-     * instead, so that a shared host-course instance always reflects every
-     * embedding's aggregate decision rather than whichever one happened to
-     * run last. Kept as public API for callers that genuinely want to
-     * reconcile a single, already-known embedding without that aggregation
-     * (e.g. a possible future admin action targeting one specific embedding).
+     * Neither of this class's own sweep methods call this directly — they
+     * route through sync_host_access_for_node_enrolment() instead, so that a
+     * shared host-course instance always reflects every embedding's
+     * aggregate decision rather than whichever one happened to run last.
+     * Kept as public API for callers that genuinely want to reconcile a
+     * single, already-known embedding without that aggregation (e.g. a
+     * possible future admin action targeting one specific embedding).
      *
      * @param base $data
      * @param object $user

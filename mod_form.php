@@ -19,6 +19,7 @@
  *
  * @package     mod_adele
  * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
+ * @copyright   2026 Ralf Erlebach
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -34,6 +35,7 @@ require_once($CFG->dirroot . '/local/adele/lib.php');
  *
  * @package     mod_adele
  * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
+ * @copyright   2026 Ralf Erlebach
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_adele_mod_form extends moodleform_mod {
@@ -111,11 +113,15 @@ class mod_adele_mod_form extends moodleform_mod {
         ];
         $mform->addElement('select', 'view', get_string('mform_select_view', 'mod_adele'), $views);
 
+        // Value semantics are unchanged (1 = all participants, 2 = own only);
+        // only the display order and default differ, so existing records keep
+        // their meaning. "Own results" is listed first and used as default.
         $userlist = [
-          1 => get_string('mform_options_userlist_all', 'mod_adele'),
           2 => get_string('mform_options_userlist_only', 'mod_adele'),
+          1 => get_string('mform_options_userlist_all', 'mod_adele'),
         ];
         $mform->addElement('select', 'userlist', get_string('mform_select_userlist', 'mod_adele'), $userlist);
+        $mform->setDefault('userlist', 2);
 
         $participantslist = [
           1 => get_string('mform_options_participantslist_this_course', 'mod_adele'),
@@ -132,12 +138,13 @@ class mod_adele_mod_form extends moodleform_mod {
 
         $mform->addRule('participantslist', get_string('mform_options_required', 'mod_adele'), 'required', null, 'client');
 
-        // Requirement mod_adele #22: only meaningful for options 2/3 (option 1
-        // always enrols actively via enrol_manual, decision F-7/A-10). Shown
-        // unconditionally rather than JS-hidden behind participantslist, since
-        // that field is a multi-select autocomplete and Moodle's mform hideIf
-        // does not reliably track autocomplete-multiple selections client-side
-        // — the help text below states the scope instead.
+        // This field is only meaningful for the participant options
+        // "starting node" and "any node" — the "this course" option always
+        // enrols actively into this course. Moodle's declarative hideIf cannot
+        // express "hide unless value 2 or 3 is among the selected values" for a
+        // multi-select autocomplete, so a small AMD module toggles the field's
+        // visibility from the current participantslist selection (see init
+        // call below).
         $hostenrolmentmode = [
             'visible' => get_string('mform_options_hostenrolmentmode_visible', 'mod_adele'),
             'hidden' => get_string('mform_options_hostenrolmentmode_hidden', 'mod_adele'),
@@ -152,6 +159,15 @@ class mod_adele_mod_form extends moodleform_mod {
         $mform->addHelpButton('hostenrolmentmode', 'mform_select_hostenrolmentmode', 'mod_adele');
         $mform->setDefault('hostenrolmentmode', 'visible');
         $mform->setType('hostenrolmentmode', PARAM_ALPHA);
+
+        // Show hostenrolmentmode only when participant option 2 ("starting
+        // node") or 3 ("any node") is selected.
+        global $PAGE;
+        $PAGE->requires->js_call_amd(
+            'mod_adele/hostenrolmentmode_visibility',
+            'init',
+            [['2', '3']]
+        );
 
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
