@@ -1,21 +1,38 @@
 name: Moodle Plugin CI
 
-on: [push, pull_request]
+"on": [push, pull_request]
 
 jobs:
-  ci:
+  # Modern range: Moodle 5.0-5.2 on PHP 8.2. Two-job split matches
+  # local_adele/enrol_adele's own CI (Session 002, Teil 16 — the mod_adele
+  # workflow previously had a single, auto-detected-range job, which is how
+  # the now-unsupported MOODLE_404_STABLE ended up being tested at all).
+  moodle500to502:
     uses: Wunderbyte-GmbH/catalyst-moodle-workflows/.github/workflows/ci.yml@main
     with:
-      # Change these based on your plugin's requirements
-
       disable_release: true  # Use true if using the tag-based release workflow
 
-      # moodle_branches: "MOODLE_401_STABLE MOODLE_402_STABLE"  # Optional: Only test specific Moodle versions
-      # min_php: "7.4"  # Optional: Set minimum PHP version
+      moodle_branches: "MOODLE_500_STABLE MOODLE_501_STABLE MOODLE_502_STABLE"
+      min_php: '8.2'
 
       # Command to install more dependencies
+      #
+      # local_adele was missing here even though version.php has always
+      # declared a hard dependency on it ($plugin->dependencies['local_adele']).
+      # Added now because it became unavoidable: mod_adele 0.1.5 requires
+      # local_adele 0.4.3 specifically (enrol_adele project, Session 001,
+      # Teil 3/4), and both plugins are co-developed on the "development"
+      # branch of the ralferlebach fork.
+      #
+      # enrol_adele added (Session 003, Teil 11): mod_adele/version.php has
+      # declared a real dependency on it since G.2 (Teil 7) — mod_adele's
+      # own observer code genuinely calls enrol_adele\local\reconciler
+      # directly (reconcile_host_user() etc.), so CI needs it installed to
+      # even reach mod_adele's own tests, not just to satisfy version.php.
       extra_plugin_runners: |
         moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
+        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle-local_adele
+        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle-enrol_adele
       #   moodle-plugin-ci add-plugin --branch master branchup/moodle-filter_shortcodes
       #   moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-tool_mocktesttime
 
@@ -38,6 +55,18 @@ jobs:
       # disable_grunt: true
       # disable_phpdoc: true
       # disable_phpcs: true
+      #
+      # phplint currently fails with "Not enough arguments (missing: 'plugin').",
+      # a Symfony console error meaning moodle-plugin-ci phplint was invoked
+      # with no plugin path at all - not a syntax problem in this repository's
+      # own PHP (phpcs' own run in the same job DID resolve the plugin path
+      # correctly and scanned real files). This looks like a bug/regression
+      # inside the shared Wunderbyte-GmbH/catalyst-moodle-workflows reusable
+      # workflow itself (tracked here via @main, so any upstream change there
+      # applies immediately) rather than anything wrong in this file. Left
+      # enabled for now since it's a coverage loss either way; uncomment
+      # below as a pragmatic stopgap if it keeps blocking CI, and consider
+      # pinning @main to a known-good tag/commit instead.
       # disable_phplint: true
       # disable_ci_validate: true
 
@@ -45,4 +74,23 @@ jobs:
       enable_phpmd: true
 
       # For strict code quality checks
+      codechecker_max_warnings: 0
+
+  # Floor: Moodle 4.5 on PHP 8.1 — the lowest version version.php still
+  # declares support for after dropping 4.01-4.04 (Session 002, Teil 15).
+  moodle405:
+    uses: Wunderbyte-GmbH/catalyst-moodle-workflows/.github/workflows/ci.yml@main
+    with:
+      disable_release: true
+
+      moodle_branches: "MOODLE_405_STABLE"
+      min_php: '8.1'
+
+      extra_plugin_runners: |
+        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
+        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle-local_adele
+        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle-enrol_adele
+
+      enable_phpmd: true
+
       codechecker_max_warnings: 0

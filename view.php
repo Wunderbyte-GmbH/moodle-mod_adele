@@ -19,6 +19,7 @@
  *
  * @package     mod_adele
  * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
+ * @copyright   2026 Ralf Erlebach
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -70,6 +71,16 @@ $learningpath = $DB->get_record(
 
 echo $OUTPUT->header();
 
+// The local_adele plugin does not prevent deletion of a learning path that
+// is still embedded here, so the referenced id can become stale. Detect that
+// case and show a clear message instead of proceeding into template
+// rendering, which would otherwise fail silently against a missing path.
+if ($learningpath->learningpathid && !$DB->record_exists('local_adele_learning_paths', ['id' => $learningpath->learningpathid])) {
+    echo $OUTPUT->notification(get_string('learningpathdeleted', 'mod_adele'), 'notifyproblem');
+    echo $OUTPUT->footer();
+    exit;
+}
+
 // Early bail out conditions.
 if (
     isloggedin() &&
@@ -77,7 +88,7 @@ if (
     $learningpath->view >= 1 &&
     $learningpath->learningpathid
 ) {
-    $alisecompatible = local_adele::get_internalquuiz_id($learningpath->learningpathid, $PAGE->course->id);
+    $alisecompatible = local_adele::get_internal_quiz_id($learningpath->learningpathid, $PAGE->course->id);
     if (has_capability('mod/adele:addinstance', $modulecontext)) {
         if ($alisecompatible['alisecompatible']) {
             echo $OUTPUT->render_from_template(
@@ -94,13 +105,9 @@ if (
                 ]
             );
         } else {
-            echo <<<EOT
-                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
-                    padding: 15px; margin-bottom: 20px; color: #721c24;">
-                    <i class="fas fa-exclamation-circle" style="color: #721c24; margin-right: 10px;"></i>
-                    <strong>{$alisecompatible['msg']}</strong>
-                </div>
-            EOT;
+            // Escape and route through the notification API rather than
+            // interpolating into raw HTML.
+            echo $OUTPUT->notification(s($alisecompatible['msg']), 'notifyproblem');
         }
     } else if (has_capability('mod/adele:readinstance', $modulecontext)) {
         if ($alisecompatible['alisecompatible']) {
@@ -118,13 +125,9 @@ if (
                 ]
             );
         } else {
-            echo <<<EOT
-                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
-                    padding: 15px; margin-bottom: 20px; color: #721c24;">
-                    <i class="fas fa-exclamation-circle" style="color: #721c24; margin-right: 10px;"></i>
-                    <strong>{$alisecompatible['msg']}</strong>
-                </div>
-            EOT;
+            // Escape and route through the notification API rather than
+            // interpolating into raw HTML.
+            echo $OUTPUT->notification(s($alisecompatible['msg']), 'notifyproblem');
         }
     }
 }

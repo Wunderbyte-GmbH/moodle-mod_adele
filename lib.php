@@ -19,6 +19,7 @@
  *
  * @package     mod_adele
  * @copyright   2024 Wunderbyte GmbH <info@wunderbyte.at>
+ * @copyright   2026 Ralf Erlebach
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -58,14 +59,27 @@ function adele_add_instance($moduleinstance, $mform = null) {
 
     $moduleinstance->timecreated = time();
 
-    $moduleinstance->participantslist = is_array($moduleinstance->participantslist ?? null)
+    // The autocomplete-multiple element in mod_form.php submits an array, but
+    // some generator/import paths (e.g. tests/backup_restore_test.php) supply
+    // a plain string instead; implode() on a string throws a TypeError since
+    // PHP 8.1, so both shapes are handled explicitly here.
+    $moduleinstance->participantslist = is_array($moduleinstance->participantslist)
         ? implode(',', $moduleinstance->participantslist)
-        : (string) ($moduleinstance->participantslist ?? '');
+        : (string) $moduleinstance->participantslist;
 
     $moduleinstance->completionlearningpathfinished =
         isset($moduleinstance->completionlearningpathfinished) ? $moduleinstance->completionlearningpathfinished : 0;
 
     $id = $DB->insert_record('adele', $moduleinstance);
+
+    // Keep local_adele's host-course index in sync, so enrol_adele can read
+    // it instead of querying this table directly.
+    \local_adele\enrol_state::sync_host_course_index(
+        (int) $id,
+        (int) $moduleinstance->learningpathid,
+        (int) $moduleinstance->course,
+        $moduleinstance->participantslist
+    );
 
     return $id;
 }
@@ -86,14 +100,29 @@ function adele_update_instance($moduleinstance, $mform = null) {
     $moduleinstance->timemodified = time();
     $moduleinstance->id = $moduleinstance->instance;
 
-    $moduleinstance->participantslist = is_array($moduleinstance->participantslist ?? null)
+    // Same defensive fix as adele_add_instance() above.
+    $moduleinstance->participantslist = is_array($moduleinstance->participantslist)
         ? implode(',', $moduleinstance->participantslist)
-        : (string) ($moduleinstance->participantslist ?? '');
+        : (string) $moduleinstance->participantslist;
 
     $moduleinstance->completionlearningpathfinished =
         isset($moduleinstance->completionlearningpathfinished) ? $moduleinstance->completionlearningpathfinished : 0;
 
-    return $DB->update_record('adele', $moduleinstance);
+    $result = $DB->update_record('adele', $moduleinstance);
+
+    // Keep local_adele's host-course index in sync. $moduleinstance->course
+    // is not guaranteed to be present on every code path that reaches an
+    // update (some callers build a partial object), so fall back to the
+    // stored value rather than write a wrong/zero courseid into the index.
+    $courseid = $moduleinstance->course ?? $DB->get_field('adele', 'course', ['id' => $moduleinstance->id]);
+    \local_adele\enrol_state::sync_host_course_index(
+        (int) $moduleinstance->id,
+        (int) $moduleinstance->learningpathid,
+        (int) $courseid,
+        $moduleinstance->participantslist
+    );
+
+    return $result;
 }
 
 /**
@@ -111,6 +140,9 @@ function adele_delete_instance($id) {
     }
 
     $DB->delete_records('adele', ['id' => $id]);
+
+    // Keep local_adele's host-course index in sync.
+    \local_adele\enrol_state::remove_host_course_index((int) $id);
 
     return true;
 }
@@ -136,7 +168,7 @@ function mod_adele_cm_info_view(cm_info $cm) {
           $learningpathmod->view == 1 &&
           $learningpathmod->learningpathid
     ) {
-        $alisecompatible = local_adele::get_internalquuiz_id($learningpathmod->learningpathid, $PAGE->course->id);
+        $alisecompatible = local_adele::get_internal_quiz_id($learningpathmod->learningpathid, $PAGE->course->id);
         $modulecontext = context_module::instance($cm->id);
         if (has_capability('mod/adele:addinstance', $modulecontext)) {
             if ($alisecompatible['alisecompatible']) {
@@ -157,7 +189,7 @@ function mod_adele_cm_info_view(cm_info $cm) {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
                     padding: 15px; margin-bottom: 20px; color: #721c24;">
                     <i class="fas fa-exclamation-circle" style="color: #721c24; margin-right: 10px;"></i>
-                    <strong>' . $alisecompatible['msg'] . '</strong>
+                    <strong>' . s($alisecompatible['msg']) . '</strong>
                 </div>';
             }
             $cm->set_content($html);
@@ -180,7 +212,7 @@ function mod_adele_cm_info_view(cm_info $cm) {
                 $html = '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px;
                     padding: 15px; margin-bottom: 20px; color: #721c24;">
                     <i class="fas fa-exclamation-circle" style="color: #721c24; margin-right: 10px;"></i>
-                    <strong>' . $alisecompatible['msg'] . '</strong>
+                    <strong>' . s($alisecompatible['msg']) . '</strong>
                 </div>';
             }
             $cm->set_content($html);
