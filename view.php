@@ -102,6 +102,7 @@ if (
                 'view' => "teacher",
                 'wwwroot' => $CFG->wwwroot,
                 'version' => $CFG->version,
+                'stringsrev' => get_config('local_adele', 'version'),
                 ]
             );
         } else {
@@ -122,6 +123,7 @@ if (
                 'view' => "student",
                 'wwwroot' => $CFG->wwwroot,
                 'version' => $CFG->version,
+                'stringsrev' => get_config('local_adele', 'version'),
                 ]
             );
         } else {
