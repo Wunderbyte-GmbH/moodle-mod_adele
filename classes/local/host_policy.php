@@ -45,9 +45,11 @@ use local_adele\learning_paths;
  * participantslist format, while the event path and the sweep can no longer
  * disagree about who is entitled.
  *
- * The {adele} table is authoritative. local_adele_host_courses mirrors part
- * of the same information and is deliberately NOT read here: a mirror can go
- * stale, the original cannot.
+ * The {adele} table is the only source. An earlier design mirrored part of
+ * this information into a local_adele index table so that no plugin outside
+ * mod_adele had to know the {adele} schema; that mirror could not carry
+ * hostenrolmentmode, which the host-course sweep needs, and a mirror nothing
+ * reads is a mirror that silently goes stale. It has been dropped again.
  *
  * @package     mod_adele
  * @copyright   2026 Wunderbyte GmbH
