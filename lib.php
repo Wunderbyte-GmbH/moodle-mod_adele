@@ -149,9 +149,16 @@ function adele_delete_instance($id) {
  * enrolments, and saving an activity must not block on them. The task is
  * idempotent, so a duplicate queue entry is harmless.
  *
- * Does nothing when enrol_adele is absent - it owns every ADELE enrolment,
- * and there is deliberately no enrol_manual fallback - but says so through
- * local_adele's standing warning instead of failing silently.
+ * Two different absences, deliberately treated differently:
+ *
+ * - enrol_adele is not there at all. Nothing maintains ADELE enrolments, and
+ *   there is deliberately no enrol_manual fallback, so this warns through
+ *   local_adele's standing message rather than failing silently.
+ * - enrol_adele is installed but predates this task. That is a partial
+ *   upgrade, not a broken installation: its nightly reconcile still corrects
+ *   host access, and this call would only have made it immediate. Warning
+ *   here would fire on every activity save during the upgrade window for a
+ *   condition that resolves itself, so it stays quiet.
  *
  * @param int $learningpathid The learning path the activity embeds.
  * @param int $hostcourseid The course the activity lives in.
@@ -161,8 +168,11 @@ function adele_queue_host_reconcile(int $learningpathid, int $hostcourseid): voi
     if (!$learningpathid || !$hostcourseid) {
         return;
     }
-    if (!class_exists('\\enrol_adele\\task\\reconcile_host_embedding_adhoc')) {
+    if (!class_exists('\\enrol_adele\\local\\reconciler')) {
         \local_adele\enrol_state::warn_enrol_adele_missing();
+        return;
+    }
+    if (!class_exists('\\enrol_adele\\task\\reconcile_host_embedding_adhoc')) {
         return;
     }
     $task = new \enrol_adele\task\reconcile_host_embedding_adhoc();
