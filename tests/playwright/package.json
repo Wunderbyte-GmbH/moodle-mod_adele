@@ -1,0 +1,12 @@
+{
+  "name": "mod-adele-playwright",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Browser smoke tests for the ADELE mod plugin.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.49.1"
+  }
+}

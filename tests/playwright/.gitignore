@@ -1,0 +1,9 @@
+# Installed by "npm ci" in CI and locally; never committed.
+node_modules/
+
+# Playwright run artefacts. The workflow uploads what it needs from the
+# runner's temp directory instead.
+test-results/
+playwright-report/
+blob-report/
+.playwright/

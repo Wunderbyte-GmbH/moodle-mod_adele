@@ -72,13 +72,9 @@ function adele_add_instance($moduleinstance, $mform = null) {
 
     $id = $DB->insert_record('adele', $moduleinstance);
 
-    // Keep local_adele's host-course index in sync, so enrol_adele can read
-    // it instead of querying this table directly.
-    \local_adele\enrol_state::sync_host_course_index(
-        (int) $id,
+    adele_queue_host_reconcile(
         (int) $moduleinstance->learningpathid,
-        (int) $moduleinstance->course,
-        $moduleinstance->participantslist
+        (int) $moduleinstance->course
     );
 
     return $id;
@@ -100,6 +96,12 @@ function adele_update_instance($moduleinstance, $mform = null) {
     $moduleinstance->timemodified = time();
     $moduleinstance->id = $moduleinstance->instance;
 
+    // The PREVIOUS state, read before the update overwrites it. Without it
+    // an activity moved from learning path A to B leaves A behind entirely:
+    // nothing afterwards knows that A was ever embedded here, so nobody
+    // revokes the access A granted (issue #8).
+    $previous = $DB->get_record('adele', ['id' => $moduleinstance->id], 'id, course, learningpathid');
+
     // Same defensive fix as adele_add_instance() above.
     $moduleinstance->participantslist = is_array($moduleinstance->participantslist)
         ? implode(',', $moduleinstance->participantslist)
@@ -110,17 +112,19 @@ function adele_update_instance($moduleinstance, $mform = null) {
 
     $result = $DB->update_record('adele', $moduleinstance);
 
-    // Keep local_adele's host-course index in sync. $moduleinstance->course
-    // is not guaranteed to be present on every code path that reaches an
-    // update (some callers build a partial object), so fall back to the
-    // stored value rather than write a wrong/zero courseid into the index.
+    // The course property is not guaranteed to be present on every code
+    // path that reaches an update (some callers build a partial object), so
+    // fall back to the stored value rather than reconcile a zero courseid.
     $courseid = $moduleinstance->course ?? $DB->get_field('adele', 'course', ['id' => $moduleinstance->id]);
-    \local_adele\enrol_state::sync_host_course_index(
-        (int) $moduleinstance->id,
-        (int) $moduleinstance->learningpathid,
-        (int) $courseid,
-        $moduleinstance->participantslist
-    );
+    adele_queue_host_reconcile((int) $moduleinstance->learningpathid, (int) $courseid);
+
+    // Reconcile the learning path this activity no longer embeds, so the
+    // access it used to justify is withdrawn now rather than at the next
+    // nightly sweep. Queued for the OLD course id too, in case the activity
+    // was moved between courses.
+    if ($previous && (int) $previous->learningpathid !== (int) $moduleinstance->learningpathid) {
+        adele_queue_host_reconcile((int) $previous->learningpathid, (int) $previous->course);
+    }
 
     return $result;
 }
@@ -141,10 +145,56 @@ function adele_delete_instance($id) {
 
     $DB->delete_records('adele', ['id' => $id]);
 
-    // Keep local_adele's host-course index in sync.
-    \local_adele\enrol_state::remove_host_course_index((int) $id);
+    // The host-course enrolments this embedding justified are now
+    // unjustified. Nothing else would ever notice: the orphan cleanup keys
+    // on deleted LEARNING PATHS, and the learning path is still very much
+    // alive here - it just is not embedded in this course any more. Without
+    // this call the affected users keep an enrolment nobody can explain and
+    // nobody can remove (issue #7).
+    adele_queue_host_reconcile((int) $exists->learningpathid, (int) $exists->course);
 
     return true;
+}
+
+/**
+ * Ask enrol_adele to re-derive host-course access for one embedding.
+ *
+ * Queued rather than run inline: a popular host course can hold thousands of
+ * enrolments, and saving an activity must not block on them. The task is
+ * idempotent, so a duplicate queue entry is harmless.
+ *
+ * Two different absences, deliberately treated differently:
+ *
+ * - enrol_adele is not there at all. Nothing maintains ADELE enrolments, and
+ *   there is deliberately no enrol_manual fallback, so this warns through
+ *   local_adele's standing message rather than failing silently.
+ * - enrol_adele is installed but predates this task. That is a partial
+ *   upgrade, not a broken installation: its nightly reconcile still corrects
+ *   host access, and this call would only have made it immediate. Warning
+ *   here would fire on every activity save during the upgrade window for a
+ *   condition that resolves itself, so it stays quiet.
+ *
+ * @param int $learningpathid The learning path the activity embeds.
+ * @param int $hostcourseid The course the activity lives in.
+ * @return void
+ */
+function adele_queue_host_reconcile(int $learningpathid, int $hostcourseid): void {
+    if (!$learningpathid || !$hostcourseid) {
+        return;
+    }
+    if (!class_exists('\\enrol_adele\\local\\reconciler')) {
+        \local_adele\enrol_state::warn_enrol_adele_missing();
+        return;
+    }
+    if (!class_exists('\\enrol_adele\\task\\reconcile_host_embedding_adhoc')) {
+        return;
+    }
+    $task = new \enrol_adele\task\reconcile_host_embedding_adhoc();
+    $task->set_custom_data([
+        'learningpathid' => $learningpathid,
+        'hostcourseid' => $hostcourseid,
+    ]);
+    \core\task\manager::queue_adhoc_task($task, true);
 }
 
 /**

@@ -15,6 +15,14 @@
 
 # Exclude developer artefacts from release archives.
 .github/       export-ignore
+# Browser tests: node dependencies, a lockfile and a Playwright config
+# are development tooling, not part of a Moodle plugin release. CI is
+# unaffected — actions/checkout clones the repository, it does not use
+# git archive.
+tests/playwright/ export-ignore
+# Load-test plans and fixtures: manually triggered tooling, not part of a
+# release either.
+tests/load/      export-ignore
 docs/          export-ignore
 tools/         export-ignore
 Makefile       export-ignore
