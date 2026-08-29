@@ -96,6 +96,12 @@ function adele_update_instance($moduleinstance, $mform = null) {
     $moduleinstance->timemodified = time();
     $moduleinstance->id = $moduleinstance->instance;
 
+    // The PREVIOUS state, read before the update overwrites it. Without it
+    // an activity moved from learning path A to B leaves A behind entirely:
+    // nothing afterwards knows that A was ever embedded here, so nobody
+    // revokes the access A granted (issue #8).
+    $previous = $DB->get_record('adele', ['id' => $moduleinstance->id], 'id, course, learningpathid');
+
     // Same defensive fix as adele_add_instance() above.
     $moduleinstance->participantslist = is_array($moduleinstance->participantslist)
         ? implode(',', $moduleinstance->participantslist)
@@ -111,6 +117,14 @@ function adele_update_instance($moduleinstance, $mform = null) {
     // fall back to the stored value rather than reconcile a zero courseid.
     $courseid = $moduleinstance->course ?? $DB->get_field('adele', 'course', ['id' => $moduleinstance->id]);
     adele_queue_host_reconcile((int) $moduleinstance->learningpathid, (int) $courseid);
+
+    // Reconcile the learning path this activity no longer embeds, so the
+    // access it used to justify is withdrawn now rather than at the next
+    // nightly sweep. Queued for the OLD course id too, in case the activity
+    // was moved between courses.
+    if ($previous && (int) $previous->learningpathid !== (int) $moduleinstance->learningpathid) {
+        adele_queue_host_reconcile((int) $previous->learningpathid, (int) $previous->course);
+    }
 
     return $result;
 }
