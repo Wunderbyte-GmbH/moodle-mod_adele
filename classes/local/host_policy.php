@@ -169,13 +169,21 @@ class host_policy {
     public static function get_learningpaths_with_host_embeddings(): array {
         global $DB;
 
-        $ids = $DB->get_fieldset_sql(
-            "SELECT DISTINCT learningpathid
-               FROM {adele}
-              WHERE " . $DB->sql_like('participantslist', ':opt2', false, false) . "
-                 OR " . $DB->sql_like('participantslist', ':opt3', false, false),
-            ['opt2' => '%2%', 'opt3' => '%3%']
-        );
+        // Every embedded learning path, deliberately without filtering on the
+        // subscription options.
+        //
+        // An earlier version narrowed this with LIKE '%2%' OR LIKE '%3%' over
+        // the participantslist column. That was a premature optimisation with
+        // only one possible failure mode — a false negative, in which a
+        // learning path silently drops out of the sweep and its users are
+        // never reconciled. It was also the only string comparison in the
+        // whole chain from a stored setting to a granted enrolment, and the
+        // one step whose behaviour depends on collation and driver.
+        //
+        // The cost of dropping it is that paths embedded with option 1 only
+        // are visited too; get_entitlement() then returns "not entitled" for
+        // them, which is correct and cheap. Correctness over a filter.
+        $ids = $DB->get_fieldset_sql("SELECT DISTINCT learningpathid FROM {adele}");
         return array_map('intval', $ids);
     }
 
