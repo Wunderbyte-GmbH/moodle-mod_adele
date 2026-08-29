@@ -1,11 +1,11 @@
-moodle-mod_adele
+Adaptive e-Learning Paths activity (moodle-mod_adele)
 ================
 
-[![Moodle Plugin CI](https://github.com/ralferlebach/moodle-mod_adele/actions/workflows/moodle-plugin-ci.yml/badge.svg?branch=development)](https://github.com/ralferlebach/moodle-mod_adele/actions?query=workflow%3A%22Moodle+Plugin+CI%22+branch%3Adevelopment)
+[![Moodle Plugin CI](https://github.com/Wunderbyte-GmbH/moodle-mod_adele/actions/workflows/moodle-plugin-ci.yml/badge.svg?branch=development)](https://github.com/Wunderbyte-GmbH/moodle-mod_adele/actions?query=workflow%3A%22Moodle+Plugin+CI%22+branch%3Adevelopment)
 
-The ADELE activity is the in-course entry point of a learning path: it embeds a path into an ordinary course, shows it to teachers and learners, and decides which of that course's participants the path applies to.
+The AdeLe activity is the in-course entry point of a learning path: it embeds a path into an ordinary course, shows it to teachers and learners, and decides which of that course's participants the path applies to.
 
-ADELE is not a single plugin but a set of three that work as one system. They are developed together and declare each other as dependencies, so they can only be installed and updated as a set.
+AdeLe is not a single plugin but a set of three that work as one system. They are developed together and declare each other as dependencies, so they can only be installed and updated as a set.
 
 * **local_adele** is the learning path itself: the graphical editor, the node structure, the completion and restriction logic, and the Vue 3 frontend.
 * **mod_adele** is the in-course entry point: it embeds a learning path in an ordinary course and decides which of that course's participants the path applies to.
@@ -21,12 +21,12 @@ Requirements
 
 This plugin requires Moodle 4.5+
 
-It also requires the other ADELE plugins. All three are developed together and must be installed in matching versions:
+It also requires the other AdeLe plugins. All three are developed together and must be installed in matching versions:
 
-* **local_adele (ADELE learning paths)** - required dependency, declared in version.php\
-  https://github.com/ralferlebach/moodle-local_adele
-* **enrol_adele (ADELE enrolment)** - required dependency, declared in version.php\
-  https://github.com/ralferlebach/moodle-enrol_adele
+* **local_adele (AdeLe learning paths)** - required dependency, declared in version.php\
+  https://github.com/Wunderbyte-GmbH/moodle_local_adele
+* **enrol_adele (AdeLe enrolment)** - required dependency, declared in version.php\
+  https://github.com/Wunderbyte-GmbH/moodle-enrol_adele
 
 
 Motivation for this plugin
@@ -68,8 +68,8 @@ Capabilities
 
 This plugin introduces these additional capabilities:
 
-* **mod/adele:addinstance** - add a new ADELE activity to a course.
-* **mod/adele:readinstance** - view an ADELE activity.
+* **mod/adele:addinstance** - add a new AdeLe activity to a course.
+* **mod/adele:readinstance** - view an AdeLe activity.
 
 
 Scheduled Tasks
@@ -103,7 +103,7 @@ Plugin repositories
 This plugin is not published in the Moodle plugins repository.
 
 The latest development version can be found on Github:
-https://github.com/ralferlebach/moodle-mod_adele
+https://github.com/Wunderbyte-GmbH/moodle-mod_adele
 
 
 Bug and problem reports / Support requests
@@ -164,14 +164,12 @@ Maintainers
 -----------
 
 The plugin is maintained by\
-Wunderbyte GmbH\
-Ralf Erlebach
+Wunderbyte GmbH
 
 Copyright
 ---------
 
 The copyright of this plugin is held by\
-Wunderbyte GmbH\
-Ralf Erlebach
+Wunderbyte GmbH
 
 Individual copyrights of individual developers are tracked in PHPDoc comments and Git commits.
