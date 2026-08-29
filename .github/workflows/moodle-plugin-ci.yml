@@ -15,7 +15,7 @@ jobs:
       moodle_branches: "MOODLE_500_STABLE MOODLE_501_STABLE MOODLE_502_STABLE"
       min_php: '8.2'
 
-      # Command to install more dependencies
+      # Command to install more dependencies.
       #
       # local_adele was missing here even though version.php has always
       # declared a hard dependency on it ($plugin->dependencies['local_adele']).
@@ -29,10 +29,18 @@ jobs:
       # own observer code genuinely calls enrol_adele\local\reconciler
       # directly (reconcile_host_user() etc.), so CI needs it installed to
       # even reach mod_adele's own tests, not just to satisfy version.php.
-      extra_plugin_runners: |
-        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
+      #
+      # NOTE: these are YAML comments and must stay OUTSIDE the block scalar
+      # below. A comment line indented LESS than the block content terminates
+      # the block, after which the next indented line is an unexpected scalar
+      # and the whole file fails to parse — GitHub then reports the error at
+      # "with:", far away from the actual cause. Two such lines sat inside the
+      # block and are the reason this workflow was rejected (Session 005).
+      # Currently not needed, kept for reference:
       #   moodle-plugin-ci add-plugin --branch master branchup/moodle-filter_shortcodes
       #   moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-tool_mocktesttime
+      extra_plugin_runners: |
+        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
         moodle-plugin-ci add-plugin --branch development ralferlebach/moodle_local_adele
         moodle-plugin-ci add-plugin --branch development ralferlebach/moodle-enrol_adele
 
@@ -40,7 +48,7 @@ jobs:
       # ignore_paths: "vue3,moodle/tests/fixtures,moodle/Sniffs,moodle/vue3,OpenTBS,TinyButStrong"
 
       # Specify paths to ignore for mustache lint
-      # mustache_ignore_names: 'cashier.mustache,shopping_cart_item.mustache,history_item.mustache,form-user-selector-suggestion.mustache,shopping_cart_popover.mustache'
+      # mustache_ignore_names: 'cashier.mustache,shopping_cart_item.mustache'
 
       # Specify paths to ignore for code checker
       # codechecker_ignore_paths: 'OpenTBS, TinyButStrong'
