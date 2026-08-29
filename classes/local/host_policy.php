@@ -311,6 +311,80 @@ class host_policy {
     }
 
     /**
+     * Every user an embedding could possibly entitle, whether or not ADELE
+     * knows about them yet.
+     *
+     * Closes an asymmetry in the sweep. Its other two candidate populations
+     * are users with an active subscription and users who already hold an
+     * ADELE host enrolment — both of which describe someone ADELE has already
+     * seen. A user enrolled in a node course has neither: subscriptions are
+     * created only on enrolment into the HOST course (deliberately, so that a
+     * node course does not drag users into unrelated learning paths), and the
+     * host enrolment is what we are trying to decide about.
+     *
+     * The consequence, before this method existed: WIDENING a subscription
+     * option granted access only through mod_adele's own save-time sweep. If
+     * that never ran — a lost event, a direct database change, a restore —
+     * nothing ever granted it, and the nightly reconcile could not heal it
+     * either. Revocation was self-healing, granting was not.
+     *
+     * Only non-ADELE enrolments count, and only currently valid ones: the
+     * same definition of "carries the user" that {@see is_user_entitled_via_option()}
+     * applies, so a grant and its later revocation cannot disagree.
+     *
+     * @param int $learningpathid The learning path id.
+     * @param int $hostcourseid The host course id.
+     * @return int[] Candidate user ids, deduplicated.
+     */
+    public static function get_candidate_userids(int $learningpathid, int $hostcourseid): array {
+        global $DB;
+
+        $learningpath = learning_paths::get_learning_path_by_id($learningpathid);
+        if (!$learningpath) {
+            return [];
+        }
+
+        $courseids = [];
+        foreach (self::get_embeddings($learningpathid) as $embedding) {
+            if ((int) $embedding['courseid'] !== $hostcourseid) {
+                continue;
+            }
+            if ($embedding['option1']) {
+                $courseids[] = $hostcourseid;
+            }
+            if ($embedding['option2']) {
+                $courseids = array_merge($courseids, self::get_node_courseids($learningpath, '2'));
+            }
+            if ($embedding['option3']) {
+                $courseids = array_merge($courseids, self::get_node_courseids($learningpath, '3'));
+            }
+        }
+        $courseids = array_values(array_unique(array_map('intval', $courseids)));
+        if (!$courseids) {
+            return [];
+        }
+
+        [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        $now = time();
+        $userids = $DB->get_fieldset_sql(
+            "SELECT DISTINCT ue.userid
+               FROM {user_enrolments} ue
+               JOIN {enrol} e ON e.id = ue.enrolid
+              WHERE e.enrol <> 'adele'
+                    AND e.status = :enabled
+                    AND (ue.timestart = 0 OR ue.timestart <= :now1)
+                    AND (ue.timeend = 0 OR ue.timeend > :now2)
+                    AND e.courseid {$insql}",
+            [
+                'enabled' => ENROL_INSTANCE_ENABLED,
+                'now1' => $now,
+                'now2' => $now,
+            ] + $inparams
+        );
+        return array_map('intval', $userids);
+    }
+
+    /**
      * Every (learning path, host course) pair a change in the given course
      * can affect, already aggregated per pair.
      *
