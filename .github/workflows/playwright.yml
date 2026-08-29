@@ -136,6 +136,10 @@ jobs:
       - name: Install Playwright and browsers
         run: |
           cd "moodle/$PLUGIN_PATH/tests/playwright"
+          # npm ci, not npm install: it fails loudly when the lockfile is
+          # missing rather than resolving whatever is current that day. The
+          # lockfile is committed despite the repository-wide ignore, see
+          # the exception in .gitignore.
           npm ci
           npx playwright install --with-deps chromium
 

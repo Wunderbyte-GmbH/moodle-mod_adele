@@ -39,10 +39,21 @@ jobs:
       # Currently not needed, kept for reference:
       #   moodle-plugin-ci add-plugin --branch master branchup/moodle-filter_shortcodes
       #   moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-tool_mocktesttime
+      # Companion plugins come from the Wunderbyte upstream, deliberately.
+      # Note the inconsistent naming that this has to match exactly:
+      # local uses an underscore (moodle_local_adele) on branch "main",
+      # mod uses a hyphen on branch "master", enrol a hyphen on "main".
+      #
+      # PREREQUISITE: this only works once the corresponding changes are
+      # merged upstream. version.php declares hard dependencies on specific
+      # sibling versions, so an upstream that is behind makes Moodle refuse
+      # to install with "Dependencies check failed" - before a single test
+      # runs. If that happens, the branches here are ahead of upstream, not
+      # the code broken.
       extra_plugin_runners: |
         moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
-        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle_local_adele
-        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle-enrol_adele
+        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle_local_adele
+        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-enrol_adele
 
       # If you need to ignore specific paths (third-party libraries are ignored by default)
       # ignore_paths: "vue3,moodle/tests/fixtures,moodle/Sniffs,moodle/vue3,OpenTBS,TinyButStrong"
@@ -94,10 +105,21 @@ jobs:
       moodle_branches: "MOODLE_405_STABLE"
       min_php: '8.1'
 
+      # Companion plugins come from the Wunderbyte upstream, deliberately.
+      # Note the inconsistent naming that this has to match exactly:
+      # local uses an underscore (moodle_local_adele) on branch "main",
+      # mod uses a hyphen on branch "master", enrol a hyphen on "main".
+      #
+      # PREREQUISITE: this only works once the corresponding changes are
+      # merged upstream. version.php declares hard dependencies on specific
+      # sibling versions, so an upstream that is behind makes Moodle refuse
+      # to install with "Dependencies check failed" - before a single test
+      # runs. If that happens, the branches here are ahead of upstream, not
+      # the code broken.
       extra_plugin_runners: |
         moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
-        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle_local_adele
-        moodle-plugin-ci add-plugin --branch development ralferlebach/moodle-enrol_adele
+        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle_local_adele
+        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-enrol_adele
 
       enable_phpmd: true
 

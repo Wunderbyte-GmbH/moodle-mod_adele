@@ -16,6 +16,11 @@ node_modules/
 npm-debug.log*
 yarn-error.log*
 package-lock.json
+# ...except the browser test suite's. "npm ci" refuses to run without a
+# lockfile, and a browser suite whose transitive dependencies can shift
+# under it is exactly how a green suite becomes an intermittent one. The
+# file never reaches a release archive: tests/playwright/ is export-ignore.
+!tests/playwright/package-lock.json
 yarn.lock
 
 # vue
