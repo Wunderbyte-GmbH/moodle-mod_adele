@@ -1,7 +1,7 @@
 Adaptive e-Learning Paths activity (moodle-mod_adele)
 ================
 
-[![Moodle Plugin CI](https://github.com/Wunderbyte-GmbH/moodle-mod_adele/actions/workflows/moodle-plugin-ci.yml/badge.svg?branch=development)](https://github.com/Wunderbyte-GmbH/moodle-mod_adele/actions?query=workflow%3A%22Moodle+Plugin+CI%22+branch%3Adevelopment)
+[![Moodle Plugin CI](https://github.com/Wunderbyte-GmbH/moodle-mod_adele/actions/workflows/moodle-plugin-ci.yml/badge.svg)](https://github.com/Wunderbyte-GmbH/moodle-mod_adele/actions?query=workflow%3A%22Moodle+Plugin+CI%22)
 
 The AdeLe activity is the in-course entry point of a learning path: it embeds a path into an ordinary course, shows it to teachers and learners, and decides which of that course's participants the path applies to.
 
