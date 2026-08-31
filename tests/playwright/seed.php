@@ -315,3 +315,32 @@ printf("export ADELE_MOD_CONTROL_USER='%s'\n", $controluser->username);
 // of waiting for cron. Waiting is forbidden by the test contract, and would be
 // wrong anyway: a timeout proves nothing about whether the task ever ran.
 printf("export ADELE_MOODLE_ROOT='%s'\n", $CFG->dirroot);
+
+// Self-check: every variable the suite reads must actually have been printed.
+//
+// This exists because it already went wrong once in the sibling plugin. A seed
+// that had lost part of its fixture block still ran, still printed the basic
+// variables and still exited zero; the failure surfaced much later as browser
+// tests complaining about unset environment variables. Silence is the wrong
+// answer when half the fixture is missing.
+$expected = [
+    'ADELE_BASE_URL', 'ADELE_ADMIN_USER', 'ADELE_ADMIN_PASSWORD',
+    'ADELE_LP_NAME', 'ADELE_LP_ID', 'ADELE_COURSE_SHORTNAME',
+    'ADELE_HOST_COURSE_ID', 'ADELE_CMID', 'ADELE_FIXTURE_PASSWORD',
+    'ADELE_MOD_HOST_COURSE_ID', 'ADELE_MOD_HOST_COURSE_URL', 'ADELE_MOD_STARTNODE_COURSE_ID',
+    'ADELE_MOD_PATH_ID', 'ADELE_MOD_PATH_TITLE', 'ADELE_MOD_STARTNODE_USER01',
+    'ADELE_MOD_STARTNODE_USER02', 'ADELE_MOD_CONTROL_USER', 'ADELE_MOODLE_ROOT',
+];
+$printed = [];
+foreach (file(__FILE__) as $line) {
+    if (preg_match('/^printf\\("export (ADELE_[A-Z0-9_]+)=/', $line, $m)) {
+        $printed[] = $m[1];
+    }
+}
+$missing = array_diff($expected, $printed);
+if ($missing) {
+    cli_error(
+        'Seed is incomplete: it does not print ' . implode(', ', $missing) . '. ' .
+        'The browser suite reads these, so a partial fixture would fail far from its cause.'
+    );
+}
