@@ -23,10 +23,19 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL: process.env.ADELE_BASE_URL,
-    // Evidence only for failures; a green run of a smoke suite needs none.
+    // Evidence is recorded for GREEN runs too, not only for failures.
+    // These suites are not just a regression net: a passing run documents the
+    // intended journey through the interface, and its video and screenshots
+    // are reused as illustrations for the manual. A run that proves the
+    // feature works but leaves nothing to look at would have to be repeated
+    // by hand to produce the same pictures.
+    //
+    // The cost is a report of tens of megabytes, which is why the workflow
+    // uploads the full bundle only on success and, on failure, just the
+    // directories of the tests that actually failed, without videos.
     trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    screenshot: 'on',
+    video: 'on',
     ignoreHTTPSErrors: true,
   },
   projects: [

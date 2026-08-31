@@ -45,7 +45,23 @@ export const env = {
  * Moodle's login form remains covered by core's own tests.
  */
 export async function loginAsAdmin(page: Page): Promise<void> {
+  await loginAs(page, env.adminUser, env.adminPassword);
+}
+
+/**
+ * Authenticate the browser context as an arbitrary user.
+ *
+ * Each call starts from a clean cookie jar. A test that switches user must
+ * not inherit the previous session: Moodle would keep serving the old one and
+ * the assertion would silently describe the wrong person.
+ *
+ * @param page The page whose context is authenticated.
+ * @param username The Moodle username.
+ * @param password The password.
+ */
+export async function loginAs(page: Page, username: string, password: string): Promise<void> {
   const api = page.context().request;
+  await page.context().clearCookies();
 
   const form = await api.get('/login/index.php');
   const token = /name="logintoken" value="([^"]+)"/.exec(await form.text())?.[1];
@@ -57,8 +73,8 @@ export async function loginAsAdmin(page: Page): Promise<void> {
     form: {
       anchor: '',
       logintoken: token,
-      username: env.adminUser,
-      password: env.adminPassword,
+      username,
+      password,
     },
   });
 
@@ -66,6 +82,6 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   // comes back to it with an error, so the final URL is the reliable signal.
   const landed = response.url();
   if (landed.includes('/login/index.php')) {
-    throw new Error(`Login rejected for user "${env.adminUser}". Moodle stayed on ${landed}.`);
+    throw new Error(`Login rejected for user "${username}". Moodle stayed on ${landed}.`);
   }
 }
