@@ -129,9 +129,26 @@ jobs:
           # variable is lost and support/env.ts throws on the first one.
           ADELE_SEED_I_KNOW=1 php "$PLUGIN_PATH/tests/playwright/seed.php" > /tmp/adele-seed.env
           echo "Seeded variables:"
-          sed -n "s/^export \([A-Z_][A-Z_]*\)=.*/  \1/p" /tmp/adele-seed.env
-          sed -n "s/^export \([A-Z_][A-Z_]*\)='\(.*\)'$/\1=\2/p" \
+          # [A-Z0-9_], not [A-Z_]: fixture names carry digits
+          # (ADELE_T0_USERNAME, ADELE_MOD_STARTNODE_USER01). A pattern without
+          # digits drops those lines SILENTLY - the step reports success, the
+          # variable never reaches the job, and the failure surfaces later as
+          # "Environment variable ... is not set" in a seemingly unrelated test.
+          sed -n "s/^export \([A-Z_][A-Z0-9_]*\)=.*/  \1/p" /tmp/adele-seed.env
+          sed -n "s/^export \([A-Z_][A-Z0-9_]*\)='\(.*\)'$/\1=\2/p" \
             /tmp/adele-seed.env >> "$GITHUB_ENV"
+
+          # And fail loudly if a printed variable did not survive the transfer,
+          # so the next mismatch is reported here instead of somewhere else.
+          printed=$(grep -c "^export [A-Z_][A-Z0-9_]*=" /tmp/adele-seed.env)
+          transferred=$(sed -n "s/^export \([A-Z_][A-Z0-9_]*\)='\(.*\)'$/\1/p" \
+            /tmp/adele-seed.env | wc -l)
+          if [ "$printed" != "$transferred" ]; then
+            echo "Seed printed $printed variables, only $transferred were transferred."
+            grep "^export " /tmp/adele-seed.env \
+              | grep -v "^export [A-Z_][A-Z0-9_]*='.*'$" || true
+            exit 1
+          fi
 
       - name: Install Playwright and browsers
         run: |
