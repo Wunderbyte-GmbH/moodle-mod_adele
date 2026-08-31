@@ -26,6 +26,18 @@ export const env = {
   get learningPathName() { return required('ADELE_LP_NAME'); },
   get courseId() { return required('ADELE_HOST_COURSE_ID'); },
   get cmid() { return required('ADELE_CMID'); },
+
+  // ADELE-PW-MOD-01 fixture. Fixed identifiers throughout: the participant
+  // assertions look these usernames up exactly.
+  get fixturePassword() { return required('ADELE_FIXTURE_PASSWORD'); },
+  get lifecycleHostCourseId() { return required('ADELE_MOD_HOST_COURSE_ID'); },
+  get lifecycleHostCourseUrl() { return required('ADELE_MOD_HOST_COURSE_URL'); },
+  get lifecycleStartCourseId() { return required('ADELE_MOD_STARTNODE_COURSE_ID'); },
+  get lifecyclePathTitle() { return required('ADELE_MOD_PATH_TITLE'); },
+  get startUser01() { return required('ADELE_MOD_STARTNODE_USER01'); },
+  get startUser02() { return required('ADELE_MOD_STARTNODE_USER02'); },
+  get controlUser() { return required('ADELE_MOD_CONTROL_USER'); },
+  get moodleRoot() { return required('ADELE_MOODLE_ROOT'); },
 };
 
 /**

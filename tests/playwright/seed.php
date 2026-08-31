@@ -40,6 +40,8 @@ require(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir . '/clilib.php');
 require_once($CFG->libdir . '/enrollib.php');
 require_once($CFG->dirroot . '/user/lib.php');
+// course_delete_module() for cleaning up a previous run's activity.
+require_once($CFG->dirroot . '/course/lib.php');
 // The data generators live under lib/testing and are not autoloaded outside
 // the PHPUnit bootstrap; this script runs against a normal site.
 require_once($CFG->libdir . '/testing/generator/lib.php');
@@ -78,6 +80,12 @@ if (strpos($CFG->wwwroot, 'https://') !== 0) {
 $admin = get_admin();
 $admin->password = hash_internal_user_password($adminpassword);
 $DB->set_field('user', 'password', $admin->password, ['id' => $admin->id]);
+
+// The plugin's own strings are German because mod_adele ships a German
+// language pack; the specs assert on those. Moodle CORE strings stay in
+// whatever language the site uses - the specs address core elements by form
+// field name instead, so no core language pack has to be downloaded in CI.
+// One dependency less, and one download less per run.
 
 $generator = new testing_data_generator();
 
@@ -127,6 +135,165 @@ $module = $generator->create_module('adele', [
 
 $cm = get_coursemodule_from_instance('adele', (int) $module->id, (int) $hostcourse->id, false, MUST_EXIST);
 
+// ---------------------------------------------------------------------------
+// ADELE-PW-MOD-01 fixture.
+//
+// What this seed must NOT do is as important as what it does: no mod_adele
+// activity and no host course enrolment for the three test users. Both are
+// the effect under test - creating them here would leave the spec asserting
+// its own setup.
+// ---------------------------------------------------------------------------
+
+$fixturepassword = 'Playwright!23';
+
+/**
+ * Create or reuse a user with a fixed username.
+ *
+ * Fixed rather than suffixed: the participant assertions look these names up
+ * exactly, and the spec forbids randomising anything an assertion depends on.
+ *
+ * @param testing_data_generator $generator The generator.
+ * @param string $username The fixed username.
+ * @param string $firstname First name.
+ * @param string $lastname Last name.
+ * @param string $password Password to set.
+ * @return object The user record.
+ */
+function adele_pw_user($generator, string $username, string $firstname, string $lastname, string $password) {
+    global $DB;
+    $existing = $DB->get_record('user', ['username' => $username]);
+    if ($existing) {
+        $DB->set_field('user', 'password', hash_internal_user_password($password), ['id' => $existing->id]);
+        return $existing;
+    }
+    return $generator->create_user([
+        'username' => $username,
+        'firstname' => $firstname,
+        'lastname' => $lastname,
+        'email' => $username . '@example.invalid',
+        'password' => $password,
+    ]);
+}
+
+/**
+ * Create or reuse a course with a fixed shortname.
+ *
+ * @param testing_data_generator $generator The generator.
+ * @param string $shortname Fixed shortname.
+ * @param string $fullname Full name.
+ * @return object The course record.
+ */
+function adele_pw_course($generator, string $shortname, string $fullname) {
+    global $DB;
+    $existing = $DB->get_record('course', ['shortname' => $shortname]);
+    return $existing ?: $generator->create_course(['shortname' => $shortname, 'fullname' => $fullname]);
+}
+
+$lifecyclehost = adele_pw_course($generator, 'PWMODHOST', 'PW mod_adele Hostkurs');
+$lifecyclestart = adele_pw_course($generator, 'PWMODSTART', 'PW mod_adele Startnode-Kurs');
+
+$startuser1 = adele_pw_user($generator, 'pw_startnode_01', 'Playwright', 'Startnode Eins', $fixturepassword);
+$startuser2 = adele_pw_user($generator, 'pw_startnode_02', 'Playwright', 'Startnode Zwei', $fixturepassword);
+$controluser = adele_pw_user($generator, 'pw_control_01', 'Playwright', 'Kontrolle', $fixturepassword);
+
+// Only the two positive users, only into the STARTING NODE course. The
+// negative control gets nothing - it is what proves the transfer is not
+// simply enrolling everyone.
+$generator->enrol_user((int) $startuser1->id, (int) $lifecyclestart->id, 'student');
+$generator->enrol_user((int) $startuser2->id, (int) $lifecyclestart->id, 'student');
+
+// Any ADELE enrolment instance left in the fixture host course by an earlier
+// run is removed outright.
+//
+// Draining the queues above only SUSPENDS those enrolments — that is the
+// product's suspend-not-delete rule, and it is correct at runtime. For a
+// fixture it is not enough: a suspended participant still appears in the
+// participants list, so the spec's very first assertion ("nobody is in the
+// host course yet") would fail on the leftovers of the previous run rather
+// than on anything the current run did. The nightly reconcile removes such
+// unembedded host instances anyway; this does the same thing now, through the
+// plugin's own delete_instance() so that its clean-up runs too.
+$hostplugin = enrol_get_plugin('adele');
+if ($hostplugin) {
+    foreach ($DB->get_records('enrol', ['enrol' => 'adele', 'courseid' => $lifecyclehost->id]) as $leftover) {
+        $hostplugin->delete_instance($leftover);
+    }
+}
+
+$lifecycletitle = 'PW mod_adele Startnode Lifecycle';
+$lifecyclejson = [
+    'tree' => [
+        'nodes' => [
+            [
+                'id' => 'dndnode_1',
+                'type' => 'courseNode',
+                'parentCourse' => ['starting_node'],
+                'data' => ['course_node_id' => [(int) $lifecyclestart->id]],
+            ],
+        ],
+        'edges' => [],
+    ],
+];
+$existingpath = $DB->get_record('local_adele_learning_paths', ['name' => $lifecycletitle]);
+if ($existingpath) {
+    $lifecyclepathid = (int) $existingpath->id;
+    $DB->set_field('local_adele_learning_paths', 'json', json_encode($lifecyclejson), ['id' => $lifecyclepathid]);
+} else {
+    $lifecyclepathid = (int) $DB->insert_record('local_adele_learning_paths', (object) [
+        'name' => $lifecycletitle,
+        'description' => 'Playwright-Fixture',
+        'timecreated' => time(),
+        'timemodified' => time(),
+        'createdby' => (int) $admin->id,
+        'visibility' => 1,
+        'json' => json_encode($lifecyclejson),
+    ]);
+}
+
+// Leftovers from an earlier run would make the "before" assertion pass or
+// fail for the wrong reason, so any mod_adele activity for this path in this
+// course is removed - through the plugin's own lifecycle, not by deleting
+// rows, so its cleanup runs too.
+foreach ($DB->get_records('adele', ['course' => $lifecyclehost->id, 'learningpathid' => $lifecyclepathid]) as $stale) {
+    $stalecm = get_coursemodule_from_instance('adele', (int) $stale->id, (int) $lifecyclehost->id);
+    if ($stalecm) {
+        course_delete_module((int) $stalecm->id);
+    } else {
+        $DB->delete_records('adele', ['id' => $stale->id]);
+    }
+}
+
+// Deleting the activity only QUEUES the clean-up of the host enrolments it
+// caused, so a fixture that stops here leaves the previous run's enrolments
+// behind — and the spec's very first assertion ("nobody is in the host course
+// yet") would then fail for a reason that has nothing to do with the run under
+// test. The queue is therefore drained here, exactly as the spec drains it
+// after its own deletion.
+// Restricted to ADELE's own task class. Draining the whole queue would also
+// run unrelated core tasks that fail in a throwaway fixture environment (a
+// login notification with no mail configuration, for one) and abort the seed
+// for a reason that has nothing to do with ADELE.
+// Two classes in order: course_delete_module() only QUEUES the deletion, and
+// adele_delete_instance() — which queues ADELE's clean-up — runs inside that
+// core task. Draining ADELE's queue first would find it empty.
+foreach ([
+    '\\core_course\\task\\course_delete_modules',
+    '\\enrol_adele\\task\\reconcile_host_embedding_adhoc',
+] as $adeletask) {
+    if (!class_exists($adeletask)) {
+        continue;
+    }
+    while (($queued = \core\task\manager::get_next_adhoc_task(time() + DAYSECS, true, $adeletask)) !== null) {
+        try {
+            $queued->execute();
+            \core\task\manager::adhoc_task_complete($queued);
+        } catch (\Throwable $e) {
+            \core\task\manager::adhoc_task_failed($queued);
+            cli_error('Seed could not drain the ad-hoc queue: ' . $e->getMessage());
+        }
+    }
+}
+
 printf("export ADELE_BASE_URL='%s'\n", $CFG->wwwroot);
 printf("export ADELE_ADMIN_USER='%s'\n", $admin->username);
 printf("export ADELE_ADMIN_PASSWORD='%s'\n", $adminpassword);
@@ -135,3 +302,16 @@ printf("export ADELE_LP_ID='%d'\n", $lpid);
 printf("export ADELE_COURSE_SHORTNAME='%s'\n", $courseshortname);
 printf("export ADELE_HOST_COURSE_ID='%d'\n", (int) $hostcourse->id);
 printf("export ADELE_CMID='%d'\n", (int) $cm->id);
+printf("export ADELE_FIXTURE_PASSWORD='%s'\n", $fixturepassword);
+printf("export ADELE_MOD_HOST_COURSE_ID='%d'\n", (int) $lifecyclehost->id);
+printf("export ADELE_MOD_HOST_COURSE_URL='%s'\n", $CFG->wwwroot . '/course/view.php?id=' . (int) $lifecyclehost->id);
+printf("export ADELE_MOD_STARTNODE_COURSE_ID='%d'\n", (int) $lifecyclestart->id);
+printf("export ADELE_MOD_PATH_ID='%d'\n", $lifecyclepathid);
+printf("export ADELE_MOD_PATH_TITLE='%s'\n", $lifecycletitle);
+printf("export ADELE_MOD_STARTNODE_USER01='%s'\n", $startuser1->username);
+printf("export ADELE_MOD_STARTNODE_USER02='%s'\n", $startuser2->username);
+printf("export ADELE_MOD_CONTROL_USER='%s'\n", $controluser->username);
+// The Moodle root, so a spec can run the ad-hoc task queue explicitly instead
+// of waiting for cron. Waiting is forbidden by the test contract, and would be
+// wrong anyway: a timeout proves nothing about whether the task ever ran.
+printf("export ADELE_MOODLE_ROOT='%s'\n", $CFG->dirroot);
