@@ -268,7 +268,8 @@ foreach (
     [
         '\\core_course\\task\\course_delete_modules',
         '\\enrol_adele\\task\\reconcile_host_embedding_adhoc',
-    ] as $adeletask) {
+    ]
+    as $adeletask) {
     if (!class_exists($adeletask)) {
         continue;
     }
