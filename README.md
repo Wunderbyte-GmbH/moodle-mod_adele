@@ -1,7 +1,7 @@
-Adaptive e-Learning Paths activity (moodle-mod_adele)
-================
+Adaptive e-Learning Paths Activity (moodle-mod_adele)
+=====================================================
 
-[![Moodle Plugin CI](https://github.com/Wunderbyte-GmbH/moodle-mod_adele/actions/workflows/moodle-plugin-ci.yml/badge.svg)](https://github.com/Wunderbyte-GmbH/moodle-mod_adele/actions?query=workflow%3A%22Moodle+Plugin+CI%22)
+[![Moodle Plugin CI](https://github.com/Wunderbyte-GmbH/moodle-mod_adele/actions/workflows/moodle-plugin-ci.yml/badge.svg?branch=master)](https://github.com/Wunderbyte-GmbH/moodle-mod_adele/actions?query=workflow%3A%22Moodle+Plugin+CI%22+branch%3Amaster)
 
 The AdeLe activity is the in-course entry point of a learning path: it embeds a path into an ordinary course, shows it to teachers and learners, and decides which of that course's participants the path applies to.
 
@@ -78,16 +78,12 @@ Scheduled Tasks
 This plugin does not introduce any additional scheduled tasks. Saving or deleting an activity queues an ad-hoc repair in enrol_adele, so a settings change takes effect within one cron run instead of waiting for that plugin's nightly reconciliation.
 
 
-How this plugin works / Pitfalls
---------------------------------
+How this plugin works
+---------------------
 
 The activity holds three enrolment-relevant settings: the learning path, the participant options, and the host course enrolment mode. Together they answer "should this user have access to this course because of this path", and that question is answered in exactly one place - `mod_adele\local\host_policy`. Both the live event path and enrol_adele's nightly reconciliation call it, so they cannot disagree.
 
-**Pitfall:** several activities may embed the same learning path in the same course. They share one enrolment instance, and the most generous setting wins - an activity set to *none* does not override a sibling set to *visible*.
-
-**Pitfall:** changing the learning path of an existing activity is a two-sided operation. The new path has to be established and the old one taken away, and no enrolment event fires for either, because nobody's course membership changes. The activity therefore reconciles the previous learning path as well, and enrol_adele's sweep catches whatever is left.
-
-**Pitfall:** a subscription is created when a user is enrolled into the course that **hosts** the activity, not into a node course. Users entitled through a node course get their access from the participant options instead.
+**Pelase note:** several activities may embed the same learning path in the same course. They share one enrolment instance, and the most generous setting wins - an activity set to *none* does not override a sibling set to *visible*.
 
 
 Theme support
@@ -165,6 +161,7 @@ Maintainers
 
 The plugin is maintained by\
 Wunderbyte GmbH
+
 
 Copyright
 ---------
