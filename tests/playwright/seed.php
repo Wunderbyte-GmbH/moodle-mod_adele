@@ -40,10 +40,7 @@ require(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir . '/clilib.php');
 require_once($CFG->libdir . '/enrollib.php');
 require_once($CFG->dirroot . '/user/lib.php');
-// course_delete_module() for cleaning up a previous run's activity.
 require_once($CFG->dirroot . '/course/lib.php');
-// The data generators live under lib/testing and are not autoloaded outside
-// the PHPUnit bootstrap; this script runs against a normal site.
 require_once($CFG->libdir . '/testing/generator/lib.php');
 require_once($CFG->libdir . '/testing/generator/data_generator.php');
 
@@ -134,15 +131,6 @@ $module = $generator->create_module('adele', [
 ]);
 
 $cm = get_coursemodule_from_instance('adele', (int) $module->id, (int) $hostcourse->id, false, MUST_EXIST);
-
-// ---------------------------------------------------------------------------
-// ADELE-PW-MOD-01 fixture.
-//
-// What this seed must NOT do is as important as what it does: no mod_adele
-// activity and no host course enrolment for the three test users. Both are
-// the effect under test - creating them here would leave the spec asserting
-// its own setup.
-// ---------------------------------------------------------------------------
 
 $fixturepassword = 'Playwright!23';
 
@@ -276,10 +264,11 @@ foreach ($DB->get_records('adele', ['course' => $lifecyclehost->id, 'learningpat
 // Two classes in order: course_delete_module() only QUEUES the deletion, and
 // adele_delete_instance() — which queues ADELE's clean-up — runs inside that
 // core task. Draining ADELE's queue first would find it empty.
-foreach ([
-    '\\core_course\\task\\course_delete_modules',
-    '\\enrol_adele\\task\\reconcile_host_embedding_adhoc',
-] as $adeletask) {
+foreach (
+    [
+        '\\core_course\\task\\course_delete_modules',
+        '\\enrol_adele\\task\\reconcile_host_embedding_adhoc',
+    ] as $adeletask) {
     if (!class_exists($adeletask)) {
         continue;
     }
