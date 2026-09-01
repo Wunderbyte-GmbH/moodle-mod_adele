@@ -1,0 +1,246 @@
+name: Playwright smoke
+
+# Browser smoke tests. They need a live Moodle site, so they run separately
+# from the moodle-plugin-ci pipeline: manual and weekly by default, to keep
+# pull request runs fast.
+#
+# NOTE: workflow_dispatch only appears in the Actions UI once this file exists
+# on the repository's DEFAULT branch.
+"on":
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: moodle
+          POSTGRES_PASSWORD: moodle
+          POSTGRES_DB: moodle
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready" --health-interval=10s
+          --health-timeout=5s --health-retries=5
+
+    env:
+      MOODLE_BRANCH: MOODLE_405_STABLE
+      MOODLE_WWWROOT: http://127.0.0.1:8000
+      PLUGIN_PATH: mod/adele
+
+    steps:
+      - name: Check out plugin
+        uses: actions/checkout@v4
+        with:
+          path: plugin
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          # mod_adele requires Moodle 4.5, and the whole trio installs only
+          # together, so the PHP version follows the moodle-plugin-ci matrix.
+          php-version: '8.1'
+          extensions: pgsql, gd, intl, zip, soap, mbstring, curl, xml, exif
+          ini-values: max_input_vars=5000
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check out Moodle
+        run: git clone --depth 1 --branch "$MOODLE_BRANCH" https://github.com/moodle/moodle.git moodle
+
+      - name: Install the plugin ecosystem into Moodle
+        run: |
+          # The three plugins declare each other as dependencies, and the graph
+          # is deliberately circular, so Moodle cannot be installed with only
+          # one of them present. SIBLING_REF pins the ref the siblings come
+          # from and defaults to the branch this workflow runs on, so a run
+          # always tests one coherent state.
+          SIBLING_REF="${SIBLING_REF:-$GITHUB_REF_NAME}"
+          echo "Geschwister-Plugins von Ref: $SIBLING_REF"
+
+          install_sibling () {
+            local sib="$1" dest="$2" src="/tmp/src_$1"
+            rm -rf "$src" "moodle/$dest"
+            git clone --depth 1 --branch "$SIBLING_REF" \
+              "https://github.com/ralferlebach/moodle-${sib}_adele.git" "$src" \
+              || git clone --depth 1 \
+                 "https://github.com/ralferlebach/moodle-${sib}_adele.git" "$src"
+            mkdir -p "$(dirname "moodle/$dest")"
+            cp -a "$src" "moodle/$dest"
+            rm -rf "moodle/$dest/.git"
+          }
+
+          # The plugin under test comes from this checkout, never from a clone.
+          rm -rf "moodle/$PLUGIN_PATH"
+          mkdir -p "$(dirname "moodle/$PLUGIN_PATH")"
+          cp -a plugin "moodle/$PLUGIN_PATH"
+          rm -rf "moodle/$PLUGIN_PATH/.git"
+
+          install_sibling local local/adele
+          install_sibling enrol enrol/adele
+
+      - name: Verify a clean plugin layout
+        run: |
+          # A plugin root must contain exactly one version.php. More than one
+          # means a repository was copied into an existing plugin directory,
+          # in which case the tested ecosystem is not the one this workflow
+          # claims to test.
+          rc=0
+          for dest in enrol/adele local/adele mod/adele; do
+            count=$(find "moodle/$dest" -name version.php | wc -l)
+            if [ "$count" -ne 1 ]; then
+              echo "moodle/$dest enthaelt $count version.php (erwartet: genau 1)"
+              find "moodle/$dest" -name version.php
+              rc=1
+            fi
+          done
+          [ "$rc" -eq 0 ] || { echo "Verschachtelte Plugin-Kopien gefunden."; exit 1; }
+          echo "Plugin-Layout ist sauber."
+
+      # install.php WRITES config.php itself and aborts when one already
+      # exists, so we must not pre-create one. It also requires an existing,
+      # writable dataroot OUTSIDE the Moodle tree.
+      - name: Install Moodle site
+        run: |
+          cd moodle
+          mkdir -p /tmp/moodledata
+          php admin/cli/install.php \
+            --non-interactive --agree-license \
+            --dbtype=pgsql --dbhost=127.0.0.1 --dbport=5432 --dbname=moodle \
+            --dbuser=moodle --dbpass=moodle \
+            --wwwroot="$MOODLE_WWWROOT" --dataroot=/tmp/moodledata \
+            --fullname="ADELE CI" --shortname="adeleci" \
+            --adminpass="Admin!23" --adminemail=ci@example.invalid
+
+      - name: Seed the browser fixture
+        run: |
+          cd moodle
+          # seed.php prints shell "export KEY='value'" lines so it can be
+          # sourced locally. $GITHUB_ENV expects bare KEY=value, so the
+          # "export " prefix and the quotes are stripped - otherwise every
+          # variable is lost and support/env.ts throws on the first one.
+          ADELE_SEED_I_KNOW=1 php "$PLUGIN_PATH/tests/playwright/seed.php" > /tmp/adele-seed.env
+          echo "Seeded variables:"
+          # [A-Z0-9_], not [A-Z_]: fixture names carry digits
+          # (ADELE_T0_USERNAME, ADELE_MOD_STARTNODE_USER01). A pattern without
+          # digits drops those lines SILENTLY - the step reports success, the
+          # variable never reaches the job, and the failure surfaces later as
+          # "Environment variable ... is not set" in a seemingly unrelated test.
+          sed -n "s/^export \([A-Z_][A-Z0-9_]*\)=.*/  \1/p" /tmp/adele-seed.env
+          sed -n "s/^export \([A-Z_][A-Z0-9_]*\)='\(.*\)'$/\1=\2/p" \
+            /tmp/adele-seed.env >> "$GITHUB_ENV"
+
+          # And fail loudly if a printed variable did not survive the transfer,
+          # so the next mismatch is reported here instead of somewhere else.
+          printed=$(grep -c "^export [A-Z_][A-Z0-9_]*=" /tmp/adele-seed.env)
+          transferred=$(sed -n "s/^export \([A-Z_][A-Z0-9_]*\)='\(.*\)'$/\1/p" \
+            /tmp/adele-seed.env | wc -l)
+          if [ "$printed" != "$transferred" ]; then
+            echo "Seed printed $printed variables, only $transferred were transferred."
+            grep "^export " /tmp/adele-seed.env \
+              | grep -v "^export [A-Z_][A-Z0-9_]*='.*'$" || true
+            exit 1
+          fi
+
+      - name: Install Playwright and browsers
+        run: |
+          cd "moodle/$PLUGIN_PATH/tests/playwright"
+          # npm ci, not npm install: it fails loudly when the lockfile is
+          # missing rather than resolving whatever is current that day. The
+          # lockfile is committed despite the repository-wide ignore, see
+          # the exception in .gitignore.
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: |
+          cd "moodle/$PLUGIN_PATH/tests/playwright"
+          # The web server runs inside THIS step. A server started in an
+          # earlier step does not reliably survive into the next one, which
+          # surfaces as a browser run against a target that has gone away.
+          #
+          # Bound to 127.0.0.1 rather than "localhost": PHP's built-in server
+          # listens on a single address while clients resolve "localhost"
+          # differently.
+          PHP_CLI_SERVER_WORKERS=8 php -S 127.0.0.1:8000 -t "$GITHUB_WORKSPACE/moodle" \
+            >/tmp/moodle-server.log 2>&1 &
+          ready=0
+          for i in $(seq 1 40); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
+              http://127.0.0.1:8000/login/index.php || true)
+            if [ "$code" = "200" ]; then ready=1; break; fi
+            sleep 3
+          done
+          if [ "$ready" != "1" ]; then
+            echo "Moodle wurde nicht erreichbar (letzter HTTP-Status: $code); Serverlog:"
+            tail -50 /tmp/moodle-server.log
+            exit 1
+          fi
+          npm test
+
+      - name: Show the tail of the server log on failure
+        if: failure()
+        run: tail -100 /tmp/moodle-server.log || true
+
+      # Failures only, and without videos: Playwright keeps a directory per
+      # test, so a failed run's evidence is a small subset of a report that
+      # otherwise runs to tens of megabytes.
+      - name: Collect the failed tests only
+        if: failure()
+        run: |
+          src="moodle/$PLUGIN_PATH/tests/playwright/test-results"
+          dest="$RUNNER_TEMP/playwright-failures"
+          rm -rf "$dest"; mkdir -p "$dest"
+          found=0
+          # error-context.md is written for failures only, so its presence
+          # marks the directory.
+          while IFS= read -r ctx; do
+            cp -a "$(dirname "$ctx")" "$dest/"
+            found=1
+          done < <(find "$src" -name error-context.md 2>/dev/null)
+          if [ "$found" = "1" ]; then
+            find "$dest" -name '*.webm' -delete
+            echo "Fehlerhafte Tests eingesammelt:"; ls -1 "$dest"
+          else
+            echo "Keine Fehlerverzeichnisse gefunden."
+          fi
+          if [ -s /tmp/moodle-server.log ]; then
+            gzip -c /tmp/moodle-server.log > "$dest/moodle-server.log.gz"
+          fi
+
+      - name: Upload failures only
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failures
+          path: ${{ runner.temp }}/playwright-failures
+          retention-days: 7
+          if-no-files-found: ignore
+
+      # Two mutually exclusive artefacts, chosen by outcome.
+      #
+      # Green: the full report including videos. It documents the intended
+      # journey and its screenshots are reused as illustrations, so a passing
+      # run has to leave something to look at.
+      #
+      # Red: only the directories of the tests that actually failed, above,
+      # and without videos - a failed run's evidence is a small subset of a
+      # report that otherwise runs to tens of megabytes.
+      - name: Upload full report with videos
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-with-videos
+          path: |
+            moodle/${{ env.PLUGIN_PATH }}/tests/playwright/playwright-report
+            moodle/${{ env.PLUGIN_PATH }}/tests/playwright/test-results
+          retention-days: 7
+          if-no-files-found: ignore

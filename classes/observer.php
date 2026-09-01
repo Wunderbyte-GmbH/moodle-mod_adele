@@ -26,6 +26,7 @@
 use core\event\base;
 use local_adele\enrollment;
 use local_adele\learning_paths;
+use mod_adele\local\host_policy;
 
 /**
  * Event observer for local_adele.
@@ -153,36 +154,22 @@ class mod_adele_observer {
      * Recompute and apply host-course access for every option-2/3 embedding
      * that the changed course is a qualifying node course of.
      *
-     * Deliberately recomputes entitlement FRESH from the current enrolment
-     * state rather than trusting the single event that triggered the call: a
-     * node course can be shared by several nodes, and a user can hold several
+     * The derivation itself lives in {@see host_policy}, which is also what
+     * enrol_adele's nightly sweep reaches (through local_adele\enrol_state).
+     * Event path and sweep therefore decide entitlement with exactly the same
+     * code and can no longer disagree; this method only applies the result.
+     *
+     * Entitlement is recomputed FRESH from the current enrolment state rather
+     * than trusted from the single event that triggered the call: a node
+     * course can be shared by several nodes, and a user can hold several
      * concurrent node-course enrolments, so only a fresh read is race-safe.
      * Warns clearly via local_adele\enrol_state::warn_enrol_adele_missing()
-     * instead of silently no-op'ing when enrol_adele is not installed. This
-     * is also the only host-course trigger for the sweep methods
-     * (enroll_starting_nodes_participants()/enroll_any_nodes_participants()
-     * route through here too via a synthetic event, so neither falls back to
-     * enrol_manual).
-     *
-     * Several embeddings can target the SAME (learning path, host course)
-     * pair — one enrol_adele host instance is shared between them (its
-     * identity does not include the mod_adele activity id). Every
-     * embedding's (entitled, mode) is therefore computed FIRST and grouped
-     * by that pair; only ONE reconcile_host_user() call is made per group, on
-     * the aggregated result — never one call per embedding overwriting
-     * whatever the previous one decided. The aggregation rule is "most
-     * generous option wins": entitled is the union across the group (any
-     * embedding granting access is enough), and the visibility mode is the
-     * most permissive one among the embeddings that actually granted it
-     * (visible > hidden > none) — consistent with the target-course rule
-     * that a shared course stays accessible as long as any node still grants
-     * it.
+     * instead of silently no-op'ing when enrol_adele is not installed.
      *
      * @param base $data The user_enrolment_created/deleted event data.
      * @return void
      */
     private static function sync_host_access_for_node_enrolment($data): void {
-        global $DB;
         if (!class_exists('\enrol_adele\local\reconciler')) {
             \local_adele\enrol_state::warn_enrol_adele_missing();
             return;
@@ -193,166 +180,26 @@ class mod_adele_observer {
             return;
         }
 
-        $embeddings = $DB->get_records(
-            'adele',
-            null,
-            '',
-            'id, course, learningpathid, participantslist, hostenrolmentmode'
-        );
-
-        // Group by (learningpathid, hostcourseid) — the granularity a single
-        // enrol_adele host instance is actually scoped to.
-        $groups = [];
-        foreach ($embeddings as $embedding) {
-            $options = array_map('trim', explode(',', (string) $embedding->participantslist));
-            if (!in_array('2', $options) && !in_array('3', $options)) {
-                continue;
-            }
-            $learningpath = learning_paths::get_learning_path_by_id($embedding->learningpathid);
-            if (!$learningpath) {
-                continue;
-            }
-            $json = is_string($learningpath->json) ? json_decode($learningpath->json, true) : $learningpath->json;
-            $touchesthislp = false;
-            foreach (($json['tree']['nodes'] ?? []) as $node) {
-                $nodecourseids = array_map('intval', $node['data']['course_node_id'] ?? []);
-                if (in_array($courseid, $nodecourseids)) {
-                    $touchesthislp = true;
-                    break;
-                }
-            }
-            if (!$touchesthislp) {
-                // The changed course has nothing to do with this embedding's
-                // learning path; skip the more expensive per-option check.
-                continue;
-            }
-
-            $entitled = false;
-            if (in_array('2', $options) && self::is_user_entitled_to_host_via_option($learningpath, $userid, '2')) {
-                $entitled = true;
-            }
-            if (
-                !$entitled && in_array('3', $options)
-                && self::is_user_entitled_to_host_via_option($learningpath, $userid, '3')
-            ) {
-                $entitled = true;
-            }
-
-            if ($entitled) {
+        foreach (host_policy::get_affected_pairs($courseid, $userid) as $pair) {
+            if ($pair['entitled']) {
                 // Mirror the one-time sweep: make sure the learning-path
                 // subscription itself exists too, not just the host enrolment.
-                $userparams = new stdClass();
-                $userparams->userid = $data->userid ?? $userid;
-                $userparams->relateduserid = $userid;
-                enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
-            }
-
-            $groupkey = $embedding->learningpathid . ':' . $embedding->course;
-            if (!isset($groups[$groupkey])) {
-                $groups[$groupkey] = (object) [
-                    'learningpathid' => (int) $embedding->learningpathid,
-                    'hostcourseid' => (int) $embedding->course,
-                    'entitled' => false,
-                    'moderank' => -1,
-                    'mode' => \enrol_adele\local\reconciler::MODE_VISIBLE,
-                ];
-            }
-            if ($entitled) {
-                $groups[$groupkey]->entitled = true;
-                $mode = (string) ($embedding->hostenrolmentmode ?: \enrol_adele\local\reconciler::MODE_VISIBLE);
-                $rank = self::host_mode_rank($mode);
-                // Only an embedding that ACTUALLY grants access gets a say in
-                // how visible that access is — one that isn't entitled at all
-                // must not be able to drag a more generous sibling down.
-                if ($rank > $groups[$groupkey]->moderank) {
-                    $groups[$groupkey]->moderank = $rank;
-                    $groups[$groupkey]->mode = $mode;
+                $learningpath = learning_paths::get_learning_path_by_id($pair['learningpathid']);
+                if ($learningpath) {
+                    $userparams = new stdClass();
+                    $userparams->userid = $data->userid ?? $userid;
+                    $userparams->relateduserid = $userid;
+                    enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
                 }
             }
-        }
-
-        foreach ($groups as $group) {
             \enrol_adele\local\reconciler::reconcile_host_user(
-                $group->learningpathid,
-                $group->hostcourseid,
+                $pair['learningpathid'],
+                $pair['hostcourseid'],
                 $userid,
-                $group->entitled,
-                $group->mode
+                $pair['entitled'],
+                $pair['mode']
             );
         }
-    }
-
-    /**
-     * Generosity ranking for host-course visibility modes, highest first:
-     * visible > hidden > none. Used to resolve competing embeddings of the
-     * same learning path in the same host course — the most permissive mode
-     * among the embeddings that actually grant access wins.
-     *
-     * @param string $mode One of enrol_adele\local\reconciler::MODE_*.
-     * @return int Higher is more permissive.
-     */
-    private static function host_mode_rank(string $mode): int {
-        switch ($mode) {
-            case \enrol_adele\local\reconciler::MODE_VISIBLE:
-                return 2;
-            case \enrol_adele\local\reconciler::MODE_HIDDEN:
-                return 1;
-            default:
-                return 0;
-        }
-    }
-
-    /**
-     * Whether the user is entitled to host-course access via the given
-     * option: holds ANY enrolment (any method, suspended counts) in a node
-     * course qualifying under it.
-     *
-     * Excludes enrol_adele's own enrolments (matching the revocation-side
-     * check in enrol_adele\observer::has_foreign_enrolment()/
-     * is_user_carried() — otherwise access would keep itself alive
-     * circularly) and checks timestart/timeend/enrol-instance-status, so a
-     * grant and its later revocation are decided by the same definition of
-     * "carries the user".
-     *
-     * @param object $learningpath The learning path record.
-     * @param int $userid The user id.
-     * @param string $option '2' (starting node) or '3' (any node).
-     * @return bool
-     */
-    private static function is_user_entitled_to_host_via_option($learningpath, int $userid, string $option): bool {
-        global $DB;
-        $json = is_string($learningpath->json) ? json_decode($learningpath->json, true) : $learningpath->json;
-        $courseids = [];
-        foreach (($json['tree']['nodes'] ?? []) as $node) {
-            if ($option === '2' && !in_array('starting_node', $node['parentCourse'] ?? [])) {
-                continue;
-            }
-            $nodecourseids = $node['data']['course_node_id'] ?? [];
-            if (is_array($nodecourseids)) {
-                $courseids = array_merge($courseids, array_map('intval', $nodecourseids));
-            }
-        }
-        $courseids = array_unique($courseids);
-        if (!$courseids) {
-            return false;
-        }
-        [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
-        $now = time();
-        $sql = "SELECT 1
-                  FROM {user_enrolments} ue
-                  JOIN {enrol} e ON e.id = ue.enrolid
-                 WHERE ue.userid = :userid
-                       AND e.enrol <> 'adele'
-                       AND e.status = :enabled
-                       AND (ue.timestart = 0 OR ue.timestart <= :now1)
-                       AND (ue.timeend = 0 OR ue.timeend > :now2)
-                       AND e.courseid {$insql}";
-        return $DB->record_exists_sql($sql, [
-            'userid' => $userid,
-            'enabled' => ENROL_INSTANCE_ENABLED,
-            'now1' => $now,
-            'now2' => $now,
-        ] + $inparams);
     }
 
     /**
