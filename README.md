@@ -83,7 +83,7 @@ How this plugin works
 
 The activity holds three enrolment-relevant settings: the learning path, the participant options, and the host course enrolment mode. Together they answer "should this user have access to this course because of this path", and that question is answered in exactly one place - `mod_adele\local\host_policy`. Both the live event path and enrol_adele's nightly reconciliation call it, so they cannot disagree.
 
-**Pelase note:** several activities may embed the same learning path in the same course. They share one enrolment instance, and the most generous setting wins - an activity set to *none* does not override a sibling set to *visible*.
+**Please note:** several activities may embed the same learning path in the same course. They share one enrolment instance, and the most generous setting wins - an activity set to *none* does not override a sibling set to *visible*.
 
 
 Theme support
