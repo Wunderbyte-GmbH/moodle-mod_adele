@@ -57,7 +57,7 @@ function adele_supports($feature) {
 function adele_add_instance($moduleinstance, $mform = null) {
     global $DB;
 
-    $moduleinstance->timecreated = time();
+    $moduleinstance->timecreated = \core\di::get(\core\clock::class)->time();
 
     // The autocomplete-multiple element in mod_form.php submits an array, but
     // some generator/import paths (e.g. tests/backup_restore_test.php) supply
@@ -93,7 +93,7 @@ function adele_add_instance($moduleinstance, $mform = null) {
 function adele_update_instance($moduleinstance, $mform = null) {
     global $DB;
 
-    $moduleinstance->timemodified = time();
+    $moduleinstance->timemodified = \core\di::get(\core\clock::class)->time();
     $moduleinstance->id = $moduleinstance->instance;
 
     // The PREVIOUS state, read before the update overwrites it. Without it
@@ -116,14 +116,17 @@ function adele_update_instance($moduleinstance, $mform = null) {
     // path that reaches an update (some callers build a partial object), so
     // fall back to the stored value rather than reconcile a zero courseid.
     $courseid = $moduleinstance->course ?? $DB->get_field('adele', 'course', ['id' => $moduleinstance->id]);
-    adele_queue_host_reconcile((int) $moduleinstance->learningpathid, (int) $courseid);
+    // A saved setting is the teacher's decision, not a blip: whoever it leaves
+    // without a carrying embedding leaves the path now (decision of
+    // 2026-10-13), not after the nightly sweep and its delay.
+    adele_queue_host_reconcile((int) $moduleinstance->learningpathid, (int) $courseid, true);
 
     // Reconcile the learning path this activity no longer embeds, so the
     // access it used to justify is withdrawn now rather than at the next
     // nightly sweep. Queued for the OLD course id too, in case the activity
     // was moved between courses.
     if ($previous && (int) $previous->learningpathid !== (int) $moduleinstance->learningpathid) {
-        adele_queue_host_reconcile((int) $previous->learningpathid, (int) $previous->course);
+        adele_queue_host_reconcile((int) $previous->learningpathid, (int) $previous->course, true);
     }
 
     return $result;
@@ -151,7 +154,11 @@ function adele_delete_instance($id) {
     // alive here - it just is not embedded in this course any more. Without
     // this call the affected users keep an enrolment nobody can explain and
     // nobody can remove (issue #7).
-    adele_queue_host_reconcile((int) $exists->learningpathid, (int) $exists->course);
+    // Deleted is (cleanly) gone (decision of 2026-10-15): whoever only this
+    // embedding carried leaves the path now, with the enrolments it gave -
+    // not after the nightly sweep. A new or restored embedding starts a new
+    // subscription, which reads the learner's progress from the courses again.
+    adele_queue_host_reconcile((int) $exists->learningpathid, (int) $exists->course, true);
 
     return true;
 }
@@ -176,9 +183,11 @@ function adele_delete_instance($id) {
  *
  * @param int $learningpathid The learning path the activity embeds.
  * @param int $hostcourseid The course the activity lives in.
+ * @param bool $withdrawuncarried Also withdraw, at once, every subscription to the path that no embedding carries any more
+ *                                (a teacher's save; decision of 2026-10-13).
  * @return void
  */
-function adele_queue_host_reconcile(int $learningpathid, int $hostcourseid): void {
+function adele_queue_host_reconcile(int $learningpathid, int $hostcourseid, bool $withdrawuncarried = false): void {
     if (!$learningpathid || !$hostcourseid) {
         return;
     }
@@ -193,6 +202,8 @@ function adele_queue_host_reconcile(int $learningpathid, int $hostcourseid): voi
     $task->set_custom_data([
         'learningpathid' => $learningpathid,
         'hostcourseid' => $hostcourseid,
+        // Read by enrol_adele from 2026100727 on; older versions ignore it.
+        'withdrawuncarried' => $withdrawuncarried,
     ]);
     \core\task\manager::queue_adhoc_task($task, true);
 }
@@ -220,7 +231,8 @@ function mod_adele_cm_info_view(cm_info $cm) {
     ) {
         $alisecompatible = local_adele::get_internal_quiz_id($learningpathmod->learningpathid, $PAGE->course->id);
         $modulecontext = context_module::instance($cm->id);
-        if (has_capability('mod/adele:addinstance', $modulecontext)) {
+        $mode = \mod_adele\local\view_mode::for_context($modulecontext);
+        if ($mode['view'] === 'teacher') {
             if ($alisecompatible['alisecompatible']) {
                 $html = $OUTPUT->render_from_template(
                     'local_adele/initview',
@@ -231,6 +243,8 @@ function mod_adele_cm_info_view(cm_info $cm) {
                     'learningpath' => $learningpathmod->learningpathid,
                     'userlist' => $learningpathmod->userlist,
                     'view' => "teacher",
+                    // Without the right to change a learner's path the view is read-only (#39).
+                    'readonly' => $mode['readonly'],
                     'wwwroot' => $CFG->wwwroot,
                     'version' => $CFG->version,
                     ]
@@ -243,7 +257,7 @@ function mod_adele_cm_info_view(cm_info $cm) {
                 </div>';
             }
             $cm->set_content($html);
-        } else if (has_capability('mod/adele:readinstance', $modulecontext)) {
+        } else if ($mode['view'] === 'student') {
             if ($alisecompatible['alisecompatible']) {
                 $html = $OUTPUT->render_from_template(
                     'local_adele/initview',

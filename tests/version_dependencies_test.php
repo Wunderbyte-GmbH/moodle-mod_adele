@@ -57,6 +57,13 @@ final class version_dependencies_test extends advanced_testcase {
             $plugin->dependencies['local_adele'],
             'A local_adele below 2026082902 still reads the abandoned host-course mirror table.'
         );
+        // The teacher's view is chosen by local/adele:viewparticipants (#39),
+        // which exists from local_adele 2026100707.
+        $this->assertGreaterThanOrEqual(
+            2026100707,
+            $plugin->dependencies['local_adele'],
+            'A local_adele below 2026100707 does not know local/adele:viewparticipants.'
+        );
         $this->assertGreaterThanOrEqual(
             2026082903,
             $plugin->dependencies['enrol_adele'],

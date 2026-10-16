@@ -3,100 +3,8 @@ name: Moodle Plugin CI
 "on": [push, pull_request]
 
 jobs:
-  # Modern range: Moodle 5.0-5.2 on PHP 8.2. Two-job split matches
-  # local_adele/enrol_adele's own CI (Session 002, Teil 16 — the mod_adele
-  # workflow previously had a single, auto-detected-range job, which is how
-  # the now-unsupported MOODLE_404_STABLE ended up being tested at all).
-  moodle500to502:
-    uses: Wunderbyte-GmbH/catalyst-moodle-workflows/.github/workflows/ci.yml@main
-    with:
-      disable_release: true  # Use true if using the tag-based release workflow
-
-      moodle_branches: "MOODLE_500_STABLE MOODLE_501_STABLE MOODLE_502_STABLE"
-      min_php: '8.2'
-
-      # Command to install more dependencies.
-      #
-      # local_adele was missing here even though version.php has always
-      # declared a hard dependency on it ($plugin->dependencies['local_adele']).
-      # Added now because it became unavoidable: mod_adele 0.1.5 requires
-      # local_adele 0.4.3 specifically (enrol_adele project, Session 001,
-      # Teil 3/4), and both plugins are co-developed on the "development"
-      # Wunderbyte upstream repos (retargeted after the v0.5.0 PRs were accepted).
-      #
-      # enrol_adele added (Session 003, Teil 11): mod_adele/version.php has
-      # declared a real dependency on it since G.2 (Teil 7) — mod_adele's
-      # own observer code genuinely calls enrol_adele\local\reconciler
-      # directly (reconcile_host_user() etc.), so CI needs it installed to
-      # even reach mod_adele's own tests, not just to satisfy version.php.
-      #
-      # NOTE: these are YAML comments and must stay OUTSIDE the block scalar
-      # below. A comment line indented LESS than the block content terminates
-      # the block, after which the next indented line is an unexpected scalar
-      # and the whole file fails to parse — GitHub then reports the error at
-      # "with:", far away from the actual cause. Two such lines sat inside the
-      # block and are the reason this workflow was rejected (Session 005).
-      # Currently not needed, kept for reference:
-      #   moodle-plugin-ci add-plugin --branch master branchup/moodle-filter_shortcodes
-      #   moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-tool_mocktesttime
-      # Companion plugins come from the Wunderbyte upstream, deliberately.
-      # Note the inconsistent naming that this has to match exactly:
-      # local uses an underscore (moodle_local_adele) on branch "main",
-      # mod uses a hyphen on branch "master", enrol a hyphen on "main".
-      #
-      # PREREQUISITE: this only works once the corresponding changes are
-      # merged upstream. version.php declares hard dependencies on specific
-      # sibling versions, so an upstream that is behind makes Moodle refuse
-      # to install with "Dependencies check failed" - before a single test
-      # runs. If that happens, the branches here are ahead of upstream, not
-      # the code broken.
-      extra_plugin_runners: |
-        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
-        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle_local_adele
-        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-enrol_adele
-
-      # If you need to ignore specific paths (third-party libraries are ignored by default)
-      # ignore_paths: "vue3,moodle/tests/fixtures,moodle/Sniffs,moodle/vue3,OpenTBS,TinyButStrong"
-
-      # Specify paths to ignore for mustache lint
-      # mustache_ignore_names: 'cashier.mustache,shopping_cart_item.mustache'
-
-      # Specify paths to ignore for code checker
-      # codechecker_ignore_paths: 'OpenTBS, TinyButStrong'
-
-      # Specify paths to ignore for PHPDoc checker
-      # phpdocchecker_ignore_paths: 'OpenTBS, TinyButStrong'
-
-      # If you need to disable specific tests
-      # disable_phpcpd: true
-      # disable_mustache: true
-      # disable_phpunit: true
-      # disable_grunt: true
-      # disable_phpdoc: true
-      # disable_phpcs: true
-      #
-      # phplint currently fails with "Not enough arguments (missing: 'plugin').",
-      # a Symfony console error meaning moodle-plugin-ci phplint was invoked
-      # with no plugin path at all - not a syntax problem in this repository's
-      # own PHP (phpcs' own run in the same job DID resolve the plugin path
-      # correctly and scanned real files). This looks like a bug/regression
-      # inside the shared Wunderbyte-GmbH/catalyst-moodle-workflows reusable
-      # workflow itself (tracked here via @main, so any upstream change there
-      # applies immediately) rather than anything wrong in this file. Left
-      # enabled for now since it's a coverage loss either way; uncomment
-      # below as a pragmatic stopgap if it keeps blocking CI, and consider
-      # pinning @main to a known-good tag/commit instead.
-      # disable_phplint: true
-      # disable_ci_validate: true
-
-      # If you need to enable PHPMD
-      enable_phpmd: true
-
-      # For strict code quality checks
-      codechecker_max_warnings: 0
-
-  # Floor: Moodle 4.5 on PHP 8.1 — the lowest version version.php still
-  # declares support for after dropping 4.01-4.04 (Session 002, Teil 15).
+  # Moodle 4.5 only: local_adele, which this plugin needs, is released for
+  # 4.5 and nothing newer yet (decision 2026-10-06). The 5.x job was removed.
   moodle405:
     uses: Wunderbyte-GmbH/catalyst-moodle-workflows/.github/workflows/ci.yml@main
     with:
@@ -105,10 +13,13 @@ jobs:
       moodle_branches: "MOODLE_405_STABLE"
       min_php: '8.1'
 
-      # Companion plugins come from the Wunderbyte upstream, deliberately.
-      # Note the inconsistent naming that this has to match exactly:
-      # local uses an underscore (moodle_local_adele) on branch "main",
-      # mod uses a hyphen on branch "master", enrol a hyphen on "main".
+      # Companion plugins come from the SAME owner as the repository under
+      # test - the Wunderbyte upstream when CI runs there, the fork when it
+      # runs in a fork - and from the branch of the same name if the
+      # companion has one, otherwise "main". All three repositories are
+      # named moodle-<type>_adele and default to "main" (local_adele was
+      # renamed from moodle_local_adele, mod_adele's "master" became
+      # "main").
       #
       # PREREQUISITE: this only works once the corresponding changes are
       # merged upstream. version.php declares hard dependencies on specific
@@ -118,8 +29,7 @@ jobs:
       # the code broken.
       extra_plugin_runners: |
         moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-local_wunderbyte_table
-        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle_local_adele
-        moodle-plugin-ci add-plugin --branch main Wunderbyte-GmbH/moodle-enrol_adele
+        OWNER="${{ github.repository_owner }}"; REF="${{ github.head_ref || github.ref_name }}"; for sib in local enrol; do url="https://github.com/$OWNER/moodle-${sib}_adele.git"; br=main; git ls-remote --exit-code --heads "$url" "$REF" >/dev/null 2>&1 && br="$REF"; echo "companion ${sib}_adele: $OWNER@$br"; moodle-plugin-ci add-plugin --branch "$br" "$OWNER/moodle-${sib}_adele"; done
 
       enable_phpmd: true
 

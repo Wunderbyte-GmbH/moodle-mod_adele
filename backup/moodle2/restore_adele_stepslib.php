@@ -60,4 +60,37 @@ class restore_adele_activity_structure_step extends restore_activity_structure_s
      */
     protected function after_execute() {
     }
+
+    /**
+     * A restored embedding subscribes and enrols like a new one.
+     *
+     * A restore (from the recycle bin, a backup or an import) fires no
+     * course_module_created event, so the observer that subscribes the
+     * course's participants when an activity is created never ran: the
+     * embedding came back, the learners did not (measured 2026-10-15,
+     * recycle bin). The same work is done here, once the whole restore is
+     * finished and the course's enrolments exist again. The subscriptions are
+     * new - the backup holds no learner path data - and read each learner's
+     * progress from the courses (decision of 2026-10-15).
+     *
+     * @return void
+     */
+    protected function after_restore() {
+        global $CFG, $DB, $USER;
+        require_once($CFG->dirroot . '/mod/adele/lib.php');
+
+        $adeleid = (int) $this->task->get_activityid();
+        $record = $DB->get_record('adele', ['id' => $adeleid], 'id, course, learningpathid');
+        if (!$record || !$DB->record_exists('local_adele_learning_paths', ['id' => $record->learningpathid])) {
+            // Restored onto a site without that learning path: nothing to subscribe to.
+            return;
+        }
+        $data = (object) [
+            'courseid' => (int) $record->course,
+            'userid' => (int) $USER->id,
+            'other' => ['modulename' => 'adele', 'instanceid' => $adeleid],
+        ];
+        \mod_adele_observer::saved_module($data);
+        adele_queue_host_reconcile((int) $record->learningpathid, (int) $record->course);
+    }
 }

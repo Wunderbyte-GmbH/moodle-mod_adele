@@ -46,4 +46,30 @@
         'eventname' => '\core\event\user_enrolment_deleted',
         'callback' => 'mod_adele_observer::user_enrolment_deleted',
     ],
+    [
+        // Taking part in a course is a matter of the role (local_adele #587):
+        // a role change is re-evaluated like an enrolment.
+        'eventname' => '\core\event\role_assigned',
+        'callback' => 'mod_adele_observer::role_changed',
+    ],
+    [
+        'eventname' => '\core\event\role_unassigned',
+        'callback' => 'mod_adele_observer::role_changed',
+    ],
+    [
+        // Who takes part follows the site's graded roles (local_adele #593):
+        // when that setting changes, the participant sources of every
+        // activity are applied again, in the background.
+        'eventname' => '\core\event\config_log_created',
+        'callback' => 'mod_adele_observer::site_config_changed',
+    ],
+    [
+        // Completion rule "learning path finished". local_adele recomputes
+        // and STORES the learner's path in its own observer of this event;
+        // the low priority puts this observer after it, so it reads the new
+        // state (path_completion_test pins the order).
+        'eventname' => '\local_adele\event\user_path_updated',
+        'callback' => 'mod_adele_observer::learner_path_updated',
+        'priority' => -100,
+    ],
  ];

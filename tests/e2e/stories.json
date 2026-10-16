@@ -1,0 +1,21 @@
+{
+  "plugin": "mod_adele",
+  "required": [
+    "H1",
+    "H2",
+    "H3",
+    "P1",
+    "P2",
+    "P3",
+    "P4"
+  ],
+  "note": "Sections 16 and 17 of the test plan.",
+  "withdrawal": [
+    "H1",
+    "H2",
+    "H3",
+    "P1",
+    "P2"
+  ],
+  "withdrawalNote": "Stories that are reversible: each needs a passed test tagged @withdrawal that takes the setting back (E2E issue, addendum of 2026-10-13)."
+}

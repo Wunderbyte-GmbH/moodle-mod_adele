@@ -114,7 +114,17 @@ class mod_adele_observer {
                     // before comparing, since a raw string comparison would silently
                     // skip the subscription whenever more than one option is selected.
                     $options = explode(',', (string) $adelelp->participantslist);
-                    if (in_array('1', $options)) {
+                    // Source 1 counts course membership - but not membership
+                    // that ADELE created itself, e.g. the host enrolment of
+                    // another learning path embedded here (#37).
+                    // ... and only as a participant, not as a teacher of
+                    // the course (local_adele #587). The role follows the
+                    // enrolment event; role_changed() below comes back then.
+                    if (
+                        in_array('1', $options)
+                        && ($data->other['enrol'] ?? '') !== 'adele'
+                        && host_policy::has_foreign_enrolment((int) $data->relateduserid, [(int) $data->courseid])
+                    ) {
                         // Subscribe user to learning path.
                         $learningpath = learning_paths::get_learning_path_by_id($adelelp->learningpathid);
                         if ($learningpath) {
@@ -125,6 +135,85 @@ class mod_adele_observer {
             }
         }
         self::sync_host_access_for_node_enrolment($data);
+        return $data;
+    }
+
+    /**
+     * Observer for role_assigned and role_unassigned in a course: whether
+     * somebody takes part in a course is a matter of the role, so a role
+     * change is re-evaluated exactly like an enrolment (local_adele #587).
+     *
+     * Gaining the participant's role subscribes (source "this course") and
+     * grants host access (sources 2/3); losing it takes host access back.
+     * Taking the SUBSCRIPTION back is enrol_adele's part - it owns the rule
+     * of who is still carried, and the grace period before history is
+     * deleted.
+     *
+     * @param base $event
+     * @return base
+     */
+    public static function role_changed($event) {
+        if (!self::is_local_adele_available()) {
+            return $event;
+        }
+        $context = $event->get_context();
+        if (!$context || $context->contextlevel != CONTEXT_COURSE) {
+            return $event;
+        }
+        // ADELE's own role bookkeeping is not somebody changing sides (#37).
+        if (($event->other['component'] ?? '') === 'enrol_adele') {
+            return $event;
+        }
+        self::user_enrolment_created((object) [
+            'courseid' => (int) $context->instanceid,
+            'relateduserid' => (int) $event->relateduserid,
+            'userid' => (int) $event->userid,
+            'other' => ['enrol' => ''],
+        ]);
+        return $event;
+    }
+
+    /**
+     * Observer for a changed site setting. When the site's graded roles
+     * change, who takes part in the embedding courses changes with them
+     * (local_adele #593): queue every activity's participant sources to be
+     * applied again, so that people who already hold a role that only now
+     * counts become learners.
+     *
+     * @param \core\event\config_log_created $event
+     * @return void
+     */
+    public static function site_config_changed($event) {
+        global $DB;
+        $other = $event->other ?? [];
+        if (($other['name'] ?? '') !== 'gradebookroles' || !empty($other['plugin'])) {
+            return;
+        }
+        foreach ($DB->get_fieldset_select('adele', 'id', '1 = 1') as $instanceid) {
+            $task = new \mod_adele\task\apply_participant_sources_adhoc();
+            $task->set_custom_data(['instanceid' => (int) $instanceid]);
+            \core\task\manager::queue_adhoc_task($task, true);
+        }
+    }
+
+    /**
+     * Observer for local_adele's user_path_updated: a learner's path has been
+     * recomputed - re-evaluate the completion of the activities that embed it
+     * with the rule "learning path finished".
+     *
+     * @param base $data
+     * @return base
+     */
+    public static function learner_path_updated($data) {
+        if (!self::is_local_adele_available()) {
+            return $data;
+        }
+        // The event carries the path as an object or, restored, as an array.
+        $userpath = (array) ($data->other['userpath'] ?? []);
+        \mod_adele\local\path_completion::update_activities(
+            (int) ($userpath['learning_path_id'] ?? 0),
+            (int) ($userpath['user_id'] ?? 0)
+        );
         return $data;
     }
 
@@ -219,6 +308,11 @@ class mod_adele_observer {
         $userparams = new stdClass();
         $userparams->userid = $data->userid;
         foreach ($enrolledusers as $user) {
+            // Members only through an enrolment ADELE made itself do not
+            // count (#37): the same rule as on the event path.
+            if (!host_policy::has_foreign_enrolment((int) $user->id, [(int) $data->courseid])) {
+                continue;
+            }
             $userparams->relateduserid = $user->id;
             enrollment::subscribe_user_to_learning_path($learningpath, $userparams);
         }

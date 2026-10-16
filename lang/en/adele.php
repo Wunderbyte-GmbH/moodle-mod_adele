@@ -33,6 +33,7 @@ $string['adelefieldset'] = 'Learning path Settings';
 $string['adelename'] = 'Learning path';
 $string['adelename_help'] = 'Help for Learning path';
 $string['adelesettings'] = 'Learning path Settings';
+$string['completiondetail:learningpathfinished'] = 'Finish the learning path';
 $string['completionlearningpathfinished'] = 'Learningpath completion';
 $string['completionlearningpathfinished:desc'] = 'Activity completion will be triggered if learning path is finished';
 $string['error_adaptivequiz_mismatch'] = 'The adaptive quiz in the course does not match the one referenced in the learning path.';

@@ -33,6 +33,7 @@ $string['adelefieldset'] = 'Lernpfad Einstellungen';
 $string['adelename'] = 'Lernpfad';
 $string['adelename_help'] = 'Hilfe für Lernpfad';
 $string['adelesettings'] = 'Lernpfad Einstellungen';
+$string['completiondetail:learningpathfinished'] = 'Lernpfad abschließen';
 $string['completionlearningpathfinished'] = 'Lernpfadabschluss';
 $string['completionlearningpathfinished:desc'] = 'Aktivität wird abgeschlossen wenn Lernpfad beendet wird';
 $string['error_adaptivequiz_mismatch'] = 'Der adaptive Test im Kurs passt nicht zu dem im Lernpfad referenzierten Test.';
